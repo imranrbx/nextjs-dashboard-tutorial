@@ -91,7 +91,6 @@ export async function fetchFilteredInvoices(
   currentPage: number,
 ) {
   const offset = (currentPage - 1) * ITEMS_PER_PAGE;
-console.log("Offset: ",offset)
   try {
     const invoices = await sql<InvoicesTable[]>`
       SELECT
@@ -132,7 +131,6 @@ export async function fetchInvoicesPages(query: string) {
       invoices.date::text ILIKE ${`%${query}%`} OR
       invoices.status ILIKE ${`%${query}%`}
   `;
-
     const totalPages = Math.floor(Number(data[0].count) / ITEMS_PER_PAGE);
     return totalPages;
   } catch (error) {
