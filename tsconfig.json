@@ -30,6 +30,6 @@
     ".next/types/**/*.ts",
     "app/lib/placeholder-data.ts",
     "scripts/seed.js"
-  ],
+, "prisma.config.ts.."  ],
   "exclude": ["node_modules"]
 }

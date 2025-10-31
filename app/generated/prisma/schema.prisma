@@ -1,0 +1,239 @@
+// schema.prisma
+
+datasource db {
+  provider = "postgresql" // or postgresql / mysql
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../app/generated/prisma"
+}
+
+/////////////////////////////////////////////////////
+// 🧑 USER & ROLE MODELS
+/////////////////////////////////////////////////////
+
+model User {
+  id            String     @id @default(cuid())
+  name          String
+  email         String     @unique
+  password      String
+  role          Role       @default(USER)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  addresses     Address[]
+  orders        Order[]
+  reviews       Review[]
+  wishlistItems Wishlist[]
+  cart          Cart?
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+/////////////////////////////////////////////////////
+// 🏠 ADDRESS
+/////////////////////////////////////////////////////
+
+model Address {
+  id         String   @id @default(cuid())
+  user       User     @relation(fields: [userId], references: [id])
+  userId     String
+  fullName   String
+  phone      String
+  street     String
+  city       String
+  state      String
+  postalCode String
+  country    String
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  orders Order[]
+}
+
+/////////////////////////////////////////////////////
+// 🏷️ CATEGORY & BRAND
+/////////////////////////////////////////////////////
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  description String?
+  products    Product[]
+  createdAt   DateTime  @default(now())
+}
+
+model Brand {
+  id        String    @id @default(cuid())
+  name      String
+  slug      String    @unique
+  products  Product[]
+  createdAt DateTime  @default(now())
+}
+
+/////////////////////////////////////////////////////
+// 🛍️ PRODUCT & VARIANT
+/////////////////////////////////////////////////////
+
+model Product {
+  id            String      @id @default(cuid())
+  name          String
+  slug          String      @unique
+  description   String?
+  price         Float
+  stock         Int         @default(0)
+  images        Json
+  category      Category?   @relation(fields: [categoryId], references: [id])
+  categoryId    String?
+  brand         Brand?      @relation(fields: [brandId], references: [id])
+  brandId       String?
+  variants      Variant[]
+  reviews       Review[]
+  wishlistItems Wishlist[]
+  cartItems     CartItem[]
+  orderItems    OrderItem[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model Variant {
+  id         String  @id @default(cuid())
+  product    Product @relation(fields: [productId], references: [id])
+  productId  String
+  name       String
+  sku        String  @unique
+  price      Float
+  stock      Int     @default(0)
+  attributes Json?
+}
+
+/////////////////////////////////////////////////////
+// 💬 REVIEWS
+/////////////////////////////////////////////////////
+
+model Review {
+  id        String   @id @default(cuid())
+  rating    Int
+  comment   String?
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  product   Product  @relation(fields: [productId], references: [id])
+  productId String
+  createdAt DateTime @default(now())
+}
+
+/////////////////////////////////////////////////////
+// ❤️ WISHLIST
+/////////////////////////////////////////////////////
+
+model Wishlist {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  product   Product  @relation(fields: [productId], references: [id])
+  productId String
+  createdAt DateTime @default(now())
+}
+
+/////////////////////////////////////////////////////
+// 🛒 CART
+/////////////////////////////////////////////////////
+
+model Cart {
+  id        String     @id @default(cuid())
+  user      User       @relation(fields: [userId], references: [id])
+  userId    String     @unique
+  items     CartItem[]
+  updatedAt DateTime   @updatedAt
+}
+
+model CartItem {
+  id        String  @id @default(cuid())
+  cart      Cart    @relation(fields: [cartId], references: [id])
+  cartId    String
+  product   Product @relation(fields: [productId], references: [id])
+  productId String
+  quantity  Int     @default(1)
+  price     Float
+}
+
+/////////////////////////////////////////////////////
+// 🧾 ORDER
+/////////////////////////////////////////////////////
+
+model Order {
+  id          String      @id @default(cuid())
+  user        User        @relation(fields: [userId], references: [id])
+  userId      String
+  address     Address?    @relation(fields: [addressId], references: [id])
+  addressId   String?
+  items       OrderItem[]
+  totalAmount Float
+  status      OrderStatus @default(PENDING)
+  payment     Payment?
+  createdAt   DateTime    @default(now())
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  order     Order   @relation(fields: [orderId], references: [id])
+  orderId   String
+  product   Product @relation(fields: [productId], references: [id])
+  productId String
+  quantity  Int
+  price     Float
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+/////////////////////////////////////////////////////
+// 💳 PAYMENT
+/////////////////////////////////////////////////////
+
+model Payment {
+  id            String        @id @default(cuid())
+  order         Order         @relation(fields: [orderId], references: [id])
+  orderId       String        @unique
+  method        String
+  transactionId String?
+  status        PaymentStatus @default(PENDING)
+  createdAt     DateTime      @default(now())
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+/////////////////////////////////////////////////////
+// 🎟️ COUPONS
+/////////////////////////////////////////////////////
+
+model Coupon {
+  id            String       @id @default(cuid())
+  code          String       @unique
+  description   String?
+  discountType  DiscountType
+  discountValue Float
+  minOrderValue Float?
+  isActive      Boolean      @default(true)
+  expiresAt     DateTime?
+  createdAt     DateTime     @default(now())
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED
+}

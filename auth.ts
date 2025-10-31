@@ -5,12 +5,20 @@ import { z } from 'zod';
 import type { User } from '@/app/lib/definitions';
 import bcrypt from 'bcrypt';
 import postgres from 'postgres';
+import { PrismaClient } from '@/app/generated/prisma';
+const prisma = new PrismaClient();
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
 
 async function getUser(email: string): Promise<User | undefined> {
     try {
-        const user = await sql<User[]>`SELECT * FROM users WHERE email=${email}`;
-        return user[0];
+        const user = await prisma.user.findUnique({
+            where: { email },
+        });
+        if (!user) {
+            console.log('User not found');
+            return;
+        }
+        return user;
     } catch (error) {
         console.error('Failed to fetch user:', error);
         throw new Error('Failed to fetch user.');
@@ -31,7 +39,7 @@ export const { auth, signIn, signOut } = NextAuth({
                 const passwordsMatch = await bcrypt.compare(password, user.password);
                 if (passwordsMatch) return user;
             }
-             console.log('Invalid credentials');
+            console.log('Invalid credentials');
             return null;
         },
     })],
