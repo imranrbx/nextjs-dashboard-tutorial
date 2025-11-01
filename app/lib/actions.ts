@@ -46,7 +46,7 @@ const SignupSchema = z.object({
 });
 const CreateInvoice = FormSchema.omit({ id: true, date: true });
 const UpdateInvoice = FormSchema.omit({ id: true, date: true });
-const SignupUser = SignupSchema.omit({ });
+const SignupUser = SignupSchema.omit({});
 export async function createInvoice(prevState: State, formData: FormData) {
   const validatedFields = CreateInvoice.safeParse({
     customerId: formData.get('customerId'),
@@ -152,7 +152,7 @@ export async function signup(
     };
   }
   console.log(validatedFields.data);
-  const {name, email, password } = validatedFields.data;
+  const { name, email, password } = validatedFields.data;
   const newPassword = await bcrypt.hash(password, 10);
 
   try {

@@ -1,13 +1,13 @@
 // schema.prisma
 
 datasource db {
-  provider = "postgresql" // or postgresql / mysql
-  url      = env("DATABASE_URL")
+    provider = "postgresql" // or postgresql / mysql
+    url      = env("DATABASE_URL")
 }
 
 generator client {
-  provider = "prisma-client-js"
-  output   = "../app/generated/prisma"
+    provider = "prisma-client-js"
+    output   = "../app/generated/prisma"
 }
 
 /////////////////////////////////////////////////////
@@ -15,23 +15,27 @@ generator client {
 /////////////////////////////////////////////////////
 
 model User {
-  id            String     @id @default(cuid())
-  name          String
-  email         String     @unique
-  password      String
-  role          Role       @default(USER)
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
-  addresses     Address[]
-  orders        Order[]
-  reviews       Review[]
-  wishlistItems Wishlist[]
-  cart          Cart?
+    id            String     @id @default(cuid())
+    name          String
+    email         String     @unique
+    password      String
+    role          Role       @default(USER)
+    image_url     String?
+    addresses     Address[]
+    orders        Order[]
+    reviews       Review[]
+    wishlistItems Wishlist[]
+    cart          Cart?
+    Invoice       Invoice[]
+    createdAt     DateTime   @default(now())
+    updatedAt     DateTime   @updatedAt
+
+    @@map("users")
 }
 
 enum Role {
-  USER
-  ADMIN
+    USER
+    ADMIN
 }
 
 /////////////////////////////////////////////////////
@@ -39,20 +43,21 @@ enum Role {
 /////////////////////////////////////////////////////
 
 model Address {
-  id          String    @id @default(cuid())
-  user        User      @relation(fields: [userId], references: [id])
-  userId      String
-  fullName    String
-  phone       String
-  street      String
-  city        String
-  state       String
-  postalCode  String
-  country     String
-  isDefault   Boolean   @default(false)
-  createdAt   DateTime  @default(now())
+    id         String   @id @default(cuid())
+    user       User     @relation(fields: [userId], references: [id])
+    userId     String
+    fullName   String
+    phone      String
+    street     String
+    city       String
+    state      String
+    postalCode String
+    country    String
+    isDefault  Boolean  @default(false)
+    createdAt  DateTime @default(now())
+    orders     Order[]
 
-  orders      Order[]
+    @@map("addresses")
 }
 
 /////////////////////////////////////////////////////
@@ -60,20 +65,24 @@ model Address {
 /////////////////////////////////////////////////////
 
 model Category {
-  id          String     @id @default(cuid())
-  name        String
-  slug        String     @unique
-  description String?
-  products    Product[]
-  createdAt   DateTime   @default(now())
+    id          String    @id @default(cuid())
+    name        String
+    slug        String    @unique
+    description String?
+    products    Product[]
+    createdAt   DateTime  @default(now())
+
+    @@map("categories")
 }
 
 model Brand {
-  id        String     @id @default(cuid())
-  name      String
-  slug      String     @unique
-  products  Product[]
-  createdAt DateTime   @default(now())
+    id        String    @id @default(cuid())
+    name      String
+    slug      String    @unique
+    products  Product[]
+    createdAt DateTime  @default(now())
+
+    @@map("brands")
 }
 
 /////////////////////////////////////////////////////
@@ -81,35 +90,39 @@ model Brand {
 /////////////////////////////////////////////////////
 
 model Product {
-  id            String        @id @default(cuid())
-  name          String
-  slug          String         @unique
-  description   String?
-  price         Float
-  stock         Int             @default(0)
-  images        Json
-  category      Category?       @relation(fields: [categoryId], references: [id])
-  categoryId    String?
-  brand         Brand?          @relation(fields: [brandId], references: [id])
-  brandId       String?
-  variants      Variant[]
-  reviews       Review[]
-  wishlistItems Wishlist[]
-  cartItems     CartItem[]
-  orderItems    OrderItem[]
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
+    id            String      @id @default(cuid())
+    name          String
+    slug          String      @unique
+    description   String?
+    price         Float
+    stock         Int         @default(0)
+    images        Json
+    category      Category?   @relation(fields: [categoryId], references: [id])
+    categoryId    String?
+    brand         Brand?      @relation(fields: [brandId], references: [id])
+    brandId       String?
+    variants      Variant[]
+    reviews       Review[]
+    wishlistItems Wishlist[]
+    cartItems     CartItem[]
+    orderItems    OrderItem[]
+    createdAt     DateTime    @default(now())
+    updatedAt     DateTime    @updatedAt
+
+    @@map("products")
 }
 
 model Variant {
-  id          String   @id @default(cuid())
-  product     Product  @relation(fields: [productId], references: [id])
-  productId   String
-  name        String
-  sku         String   @unique
-  price       Float
-  stock       Int      @default(0)
-  attributes  Json?
+    id         String  @id @default(cuid())
+    product    Product @relation(fields: [productId], references: [id])
+    productId  String
+    name       String
+    sku        String  @unique
+    price      Float
+    stock      Int     @default(0)
+    attributes Json?
+
+    @@map("variants")
 }
 
 /////////////////////////////////////////////////////
@@ -117,14 +130,16 @@ model Variant {
 /////////////////////////////////////////////////////
 
 model Review {
-  id        String   @id @default(cuid())
-  rating    Int
-  comment   String?
-  user      User     @relation(fields: [userId], references: [id])
-  userId    String
-  product   Product  @relation(fields: [productId], references: [id])
-  productId String
-  createdAt DateTime @default(now())
+    id        String   @id @default(cuid())
+    rating    Int
+    comment   String?
+    user      User     @relation(fields: [userId], references: [id])
+    userId    String
+    product   Product  @relation(fields: [productId], references: [id])
+    productId String
+    createdAt DateTime @default(now())
+
+    @@map("reviews")
 }
 
 /////////////////////////////////////////////////////
@@ -132,12 +147,14 @@ model Review {
 /////////////////////////////////////////////////////
 
 model Wishlist {
-  id        String   @id @default(cuid())
-  user      User     @relation(fields: [userId], references: [id])
-  userId    String
-  product   Product  @relation(fields: [productId], references: [id])
-  productId String
-  createdAt DateTime @default(now())
+    id        String   @id @default(cuid())
+    user      User     @relation(fields: [userId], references: [id])
+    userId    String
+    product   Product  @relation(fields: [productId], references: [id])
+    productId String
+    createdAt DateTime @default(now())
+
+    @@map("wishlist")
 }
 
 /////////////////////////////////////////////////////
@@ -145,21 +162,26 @@ model Wishlist {
 /////////////////////////////////////////////////////
 
 model Cart {
-  id        String      @id @default(cuid())
-  user      User         @relation(fields: [userId], references: [id])
-  userId    String       @unique
-  items     CartItem[]
-  updatedAt DateTime     @updatedAt
+    id        String     @id @default(cuid())
+    user      User       @relation(fields: [userId], references: [id])
+    userId    String     @unique
+    items     CartItem[]
+    updatedAt DateTime   @updatedAt
+
+    @@map("carts")
 }
 
 model CartItem {
-  id         String   @id @default(cuid())
-  cart       Cart     @relation(fields: [cartId], references: [id])
-  cartId     String
-  product    Product  @relation(fields: [productId], references: [id])
-  productId  String
-  quantity   Int      @default(1)
-  price      Float
+    id        String   @id @default(cuid())
+    cart      Cart     @relation(fields: [cartId], references: [id])
+    cartId    String
+    product   Product  @relation(fields: [productId], references: [id])
+    productId String
+    quantity  Int      @default(1)
+    price     Float
+    createdAt DateTime @default(now())
+
+    @@map("cartItems")
 }
 
 /////////////////////////////////////////////////////
@@ -167,34 +189,40 @@ model CartItem {
 /////////////////////////////////////////////////////
 
 model Order {
-  id          String        @id @default(cuid())
-  user        User          @relation(fields: [userId], references: [id])
-  userId      String
-  address     Address?      @relation(fields: [addressId], references: [id])
-  addressId   String?
-  items       OrderItem[]
-  totalAmount Float
-  status      OrderStatus   @default(PENDING)
-  payment     Payment?
-  createdAt   DateTime      @default(now())
+    id          String      @id @default(cuid())
+    user        User        @relation(fields: [userId], references: [id])
+    userId      String
+    address     Address?    @relation(fields: [addressId], references: [id])
+    addressId   String?
+    items       OrderItem[]
+    totalAmount Float
+    status      OrderStatus @default(PENDING)
+    payment     Payment?
+    createdAt   DateTime    @default(now())
+    updatedAt   DateTime    @updatedAt
+
+    @@map("orders")
 }
 
 model OrderItem {
-  id         String   @id @default(cuid())
-  order      Order    @relation(fields: [orderId], references: [id])
-  orderId    String
-  product    Product  @relation(fields: [productId], references: [id])
-  productId  String
-  quantity   Int
-  price      Float
+    id        String   @id @default(cuid())
+    order     Order    @relation(fields: [orderId], references: [id])
+    orderId   String
+    product   Product  @relation(fields: [productId], references: [id])
+    productId String
+    quantity  Int
+    price     Float
+    createdAt DateTime @default(now())
+
+    @@map("orderItems")
 }
 
 enum OrderStatus {
-  PENDING
-  PROCESSING
-  SHIPPED
-  DELIVERED
-  CANCELLED
+    PENDING
+    PROCESSING
+    SHIPPED
+    DELIVERED
+    CANCELLED
 }
 
 /////////////////////////////////////////////////////
@@ -202,19 +230,22 @@ enum OrderStatus {
 /////////////////////////////////////////////////////
 
 model Payment {
-  id           String      @id @default(cuid())
-  order        Order       @relation(fields: [orderId], references: [id])
-  orderId      String      @unique
-  method       String
-  transactionId String?
-  status       PaymentStatus @default(PENDING)
-  createdAt    DateTime     @default(now())
+    id            String        @id @default(cuid())
+    order         Order         @relation(fields: [orderId], references: [id])
+    orderId       String        @unique
+    method        String
+    transactionId String?
+    status        PaymentStatus @default(PENDING)
+    createdAt     DateTime      @default(now())
+    updatedAt     DateTime      @updatedAt
+
+    @@map("payments")
 }
 
 enum PaymentStatus {
-  PENDING
-  SUCCESS
-  FAILED
+    PENDING
+    SUCCESS
+    FAILED
 }
 
 /////////////////////////////////////////////////////
@@ -222,18 +253,46 @@ enum PaymentStatus {
 /////////////////////////////////////////////////////
 
 model Coupon {
-  id            String   @id @default(cuid())
-  code          String   @unique
-  description   String?
-  discountType  DiscountType
-  discountValue Float
-  minOrderValue Float?
-  isActive      Boolean  @default(true)
-  expiresAt     DateTime?
-  createdAt     DateTime @default(now())
+    id            String       @id @default(cuid())
+    code          String       @unique
+    description   String?
+    discountType  DiscountType
+    discountValue Float
+    minOrderValue Float?
+    isActive      Boolean      @default(true)
+    expiresAt     DateTime?
+    createdAt     DateTime     @default(now())
+    updatedAt     DateTime     @updatedAt
+
+    @@map("coupons")
 }
 
 enum DiscountType {
-  PERCENTAGE
-  FIXED
+    PERCENTAGE
+    FIXED
+}
+
+model Invoice {
+    id      String        @id @default(cuid())
+    user_id String
+    user    User          @relation(fields: [user_id], references: [id])
+    amount  Int
+    status  InvoiceStatus @default(PENDING)
+    date    DateTime      @default(now())
+
+    @@map("invoices")
+}
+
+enum InvoiceStatus {
+    PENDING
+    PAID
+    FAILED
+}
+
+model Revenue {
+    id      String @id @default(cuid())
+    month   String
+    revenue Int
+
+    @@map("revenues")
 }

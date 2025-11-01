@@ -126,6 +126,7 @@ exports.Prisma.UserScalarFieldEnum = {
   email: 'email',
   password: 'password',
   role: 'role',
+  image_url: 'image_url',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -210,7 +211,8 @@ exports.Prisma.CartItemScalarFieldEnum = {
   cartId: 'cartId',
   productId: 'productId',
   quantity: 'quantity',
-  price: 'price'
+  price: 'price',
+  createdAt: 'createdAt'
 };
 
 exports.Prisma.OrderScalarFieldEnum = {
@@ -219,7 +221,8 @@ exports.Prisma.OrderScalarFieldEnum = {
   addressId: 'addressId',
   totalAmount: 'totalAmount',
   status: 'status',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.OrderItemScalarFieldEnum = {
@@ -227,7 +230,8 @@ exports.Prisma.OrderItemScalarFieldEnum = {
   orderId: 'orderId',
   productId: 'productId',
   quantity: 'quantity',
-  price: 'price'
+  price: 'price',
+  createdAt: 'createdAt'
 };
 
 exports.Prisma.PaymentScalarFieldEnum = {
@@ -236,7 +240,8 @@ exports.Prisma.PaymentScalarFieldEnum = {
   method: 'method',
   transactionId: 'transactionId',
   status: 'status',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.CouponScalarFieldEnum = {
@@ -248,7 +253,22 @@ exports.Prisma.CouponScalarFieldEnum = {
   minOrderValue: 'minOrderValue',
   isActive: 'isActive',
   expiresAt: 'expiresAt',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.InvoiceScalarFieldEnum = {
+  id: 'id',
+  user_id: 'user_id',
+  amount: 'amount',
+  status: 'status',
+  date: 'date'
+};
+
+exports.Prisma.RevenueScalarFieldEnum = {
+  id: 'id',
+  month: 'month',
+  revenue: 'revenue'
 };
 
 exports.Prisma.SortOrder = {
@@ -304,6 +324,12 @@ exports.DiscountType = exports.$Enums.DiscountType = {
   FIXED: 'FIXED'
 };
 
+exports.InvoiceStatus = exports.$Enums.InvoiceStatus = {
+  PENDING: 'PENDING',
+  PAID: 'PAID',
+  FAILED: 'FAILED'
+};
+
 exports.Prisma.ModelName = {
   User: 'User',
   Address: 'Address',
@@ -318,7 +344,9 @@ exports.Prisma.ModelName = {
   Order: 'Order',
   OrderItem: 'OrderItem',
   Payment: 'Payment',
-  Coupon: 'Coupon'
+  Coupon: 'Coupon',
+  Invoice: 'Invoice',
+  Revenue: 'Revenue'
 };
 
 /**

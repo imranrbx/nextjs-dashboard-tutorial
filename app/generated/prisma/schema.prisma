@@ -20,13 +20,17 @@ model User {
   email         String     @unique
   password      String
   role          Role       @default(USER)
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+  image_url     String?
   addresses     Address[]
   orders        Order[]
   reviews       Review[]
   wishlistItems Wishlist[]
   cart          Cart?
+  Invoice       Invoice[]
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  @@map("users")
 }
 
 enum Role {
@@ -51,8 +55,9 @@ model Address {
   country    String
   isDefault  Boolean  @default(false)
   createdAt  DateTime @default(now())
+  orders     Order[]
 
-  orders Order[]
+  @@map("addresses")
 }
 
 /////////////////////////////////////////////////////
@@ -66,6 +71,8 @@ model Category {
   description String?
   products    Product[]
   createdAt   DateTime  @default(now())
+
+  @@map("categories")
 }
 
 model Brand {
@@ -74,6 +81,8 @@ model Brand {
   slug      String    @unique
   products  Product[]
   createdAt DateTime  @default(now())
+
+  @@map("brands")
 }
 
 /////////////////////////////////////////////////////
@@ -99,6 +108,8 @@ model Product {
   orderItems    OrderItem[]
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
+
+  @@map("products")
 }
 
 model Variant {
@@ -110,6 +121,8 @@ model Variant {
   price      Float
   stock      Int     @default(0)
   attributes Json?
+
+  @@map("variants")
 }
 
 /////////////////////////////////////////////////////
@@ -125,6 +138,8 @@ model Review {
   product   Product  @relation(fields: [productId], references: [id])
   productId String
   createdAt DateTime @default(now())
+
+  @@map("reviews")
 }
 
 /////////////////////////////////////////////////////
@@ -138,6 +153,8 @@ model Wishlist {
   product   Product  @relation(fields: [productId], references: [id])
   productId String
   createdAt DateTime @default(now())
+
+  @@map("wishlist")
 }
 
 /////////////////////////////////////////////////////
@@ -150,16 +167,21 @@ model Cart {
   userId    String     @unique
   items     CartItem[]
   updatedAt DateTime   @updatedAt
+
+  @@map("carts")
 }
 
 model CartItem {
-  id        String  @id @default(cuid())
-  cart      Cart    @relation(fields: [cartId], references: [id])
+  id        String   @id @default(cuid())
+  cart      Cart     @relation(fields: [cartId], references: [id])
   cartId    String
-  product   Product @relation(fields: [productId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
   productId String
-  quantity  Int     @default(1)
+  quantity  Int      @default(1)
   price     Float
+  createdAt DateTime @default(now())
+
+  @@map("cartItems")
 }
 
 /////////////////////////////////////////////////////
@@ -177,16 +199,22 @@ model Order {
   status      OrderStatus @default(PENDING)
   payment     Payment?
   createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@map("orders")
 }
 
 model OrderItem {
-  id        String  @id @default(cuid())
-  order     Order   @relation(fields: [orderId], references: [id])
+  id        String   @id @default(cuid())
+  order     Order    @relation(fields: [orderId], references: [id])
   orderId   String
-  product   Product @relation(fields: [productId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
   productId String
   quantity  Int
   price     Float
+  createdAt DateTime @default(now())
+
+  @@map("orderItems")
 }
 
 enum OrderStatus {
@@ -209,6 +237,9 @@ model Payment {
   transactionId String?
   status        PaymentStatus @default(PENDING)
   createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@map("payments")
 }
 
 enum PaymentStatus {
@@ -231,9 +262,37 @@ model Coupon {
   isActive      Boolean      @default(true)
   expiresAt     DateTime?
   createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@map("coupons")
 }
 
 enum DiscountType {
   PERCENTAGE
   FIXED
+}
+
+model Invoice {
+  id      String        @id @default(cuid())
+  user_id String
+  user    User          @relation(fields: [user_id], references: [id])
+  amount  Int
+  status  InvoiceStatus @default(PENDING)
+  date    DateTime      @default(now())
+
+  @@map("invoices")
+}
+
+enum InvoiceStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
+model Revenue {
+  id      String @id @default(cuid())
+  month   String
+  revenue Int
+
+  @@map("revenues")
 }
