@@ -1,6 +1,6 @@
 import Form from '@/app/ui/invoices/edit-form';
 import Breadcrumbs from '@/app/ui/invoices/breadcrumbs';
-import { fetchInvoiceById, fetchCustomers } from '@/app/lib/data';
+import { fetchInvoiceById, fetchUsers } from '@/app/lib/data';
 import { notFound } from 'next/navigation';
 
 const EditInvoicePage = async (props: { params: Promise<{ id: string }> }) => {
@@ -8,7 +8,7 @@ const EditInvoicePage = async (props: { params: Promise<{ id: string }> }) => {
     const id = params.id;
     const [invoice, customers] = await Promise.all([
         fetchInvoiceById(id),
-        fetchCustomers(),
+        fetchUsers(),
     ]);
     if (!invoice) {
         notFound();

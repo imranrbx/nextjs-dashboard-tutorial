@@ -18,9 +18,9 @@ export default function EditInvoiceForm({
   invoice: InvoiceForm;
   customers: CustomerField[];
 }) {
-   const initialState: State = { message: null, errors: {} };
-    const updateInvoiceWithId = updateInvoice.bind(null, invoice.id);
-     const [state, formAction] = useActionState(updateInvoiceWithId, initialState);
+  const initialState: State = { message: null, errors: {} };
+  const updateInvoiceWithId = updateInvoice.bind(null, invoice.id);
+  const [state, formAction] = useActionState(updateInvoiceWithId, initialState);
   return (
     <form action={formAction}>
       {state && state.errors && state.message}
@@ -35,7 +35,7 @@ export default function EditInvoiceForm({
               id="customer"
               name="customerId"
               className="peer block w-full cursor-pointer rounded-md border border-gray-200 py-2 pl-10 text-sm outline-2 placeholder:text-gray-500"
-              defaultValue={invoice.customer_id}
+              defaultValue={invoice.user_id}
               required
             >
               <option value="" disabled>

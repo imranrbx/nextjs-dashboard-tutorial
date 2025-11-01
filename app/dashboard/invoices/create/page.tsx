@@ -1,10 +1,10 @@
 import Form from '@/app/ui/invoices/create-form';
 import Breadcrumbs from '@/app/ui/invoices/breadcrumbs';
-import { fetchCustomers } from '@/app/lib/data';
+import { fetchUsers } from '@/app/lib/data';
 const CreatePage = async () => {
-    const customers = await fetchCustomers();
+  const customers = await fetchUsers();
   return (
-      <main>
+    <main>
       <Breadcrumbs
         breadcrumbs={[
           { label: 'Invoices', href: '/dashboard/invoices' },

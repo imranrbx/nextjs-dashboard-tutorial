@@ -7,6 +7,7 @@ import { redirect } from 'next/navigation';
 import { signIn } from '@/auth';
 import { AuthError } from 'next-auth';
 import bcrypt from 'bcrypt';
+import prisma from './prisma';
 export type State = {
   errors?: {
     customerId?: string[];
@@ -53,6 +54,7 @@ export async function createInvoice(prevState: State, formData: FormData) {
     amount: formData.get('amount'),
     status: formData.get('status'),
   });
+
   if (!validatedFields.success) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,
@@ -62,15 +64,18 @@ export async function createInvoice(prevState: State, formData: FormData) {
   const { customerId, amount, status } = validatedFields.data;
   const amountInCents = amount * 100;
   const date = new Date().toISOString().split('T')[0];
+  console.log(customerId)
   try {
-    await sql`
-      INSERT INTO invoices (customer_id, amount, status, date)
-      VALUES (${customerId}, ${amountInCents}, ${status}, ${date})
-    `;
+    await prisma.invoice.create({
+      data: {
+        user_id: customerId,
+        amount: amountInCents,
+        status: status.toUpperCase() as any,
+      },
+    });
   } catch (error) {
     // We'll also log the error to the console for now
     console.error(error);
-
     return {
       message: 'Database Error: Failed to Create Invoice.',
     };
