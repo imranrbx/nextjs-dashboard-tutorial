@@ -1,5 +1,5 @@
 import { fetchCardData } from '@/app/lib/data';
- 
+
 import {
   BanknotesIcon,
   ClockIcon,
@@ -11,9 +11,9 @@ import { lusitana } from '@/app/ui/fonts';
 
 export default async function CardWrapper() {
 
- const {
+  const {
     numberOfInvoices,
-    numberOfCustomers,
+    numberOfUsers,
     totalPaidInvoices,
     totalPendingInvoices,
   } = await fetchCardData();
@@ -26,9 +26,9 @@ export default async function CardWrapper() {
       <Card title="Total Invoices" value={numberOfInvoices} type="invoices" />
       <Card
         title="Total Customers"
-        value={numberOfCustomers}
+        value={numberOfUsers}
         type="customers"
-      /> 
+      />
     </>
   );
 }
@@ -42,12 +42,12 @@ export function Card({
   value: number | string;
   type: 'invoices' | 'customers' | 'pending' | 'collected';
 }) {
-    const iconMap = {
-  collected: BanknotesIcon,
-  customers: UserGroupIcon,
-  pending: ClockIcon,
-  invoices: InboxIcon,
-};
+  const iconMap = {
+    collected: BanknotesIcon,
+    customers: UserGroupIcon,
+    pending: ClockIcon,
+    invoices: InboxIcon,
+  };
   const Icon = iconMap[type];
 
   return (

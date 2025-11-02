@@ -8,6 +8,7 @@ import { signIn } from '@/auth';
 import { AuthError } from 'next-auth';
 import bcrypt from 'bcrypt';
 import prisma from './prisma';
+import { generateUniqueCategorySlug, generateUniqueBrandSlug, generateUniqueProductSlug } from './slug-utils';
 export type State = {
   errors?: {
     customerId?: string[];
@@ -21,6 +22,52 @@ export type UserState = {
     name?: string[];
     email?: string[];
     password?: string[];
+  };
+  message?: string | null;
+};
+export type CategoryState = {
+  errors?: {
+    name?: string[];
+    slug?: string[];
+    description?: string[];
+  };
+  message?: string | null;
+};
+export type BrandState = {
+  errors?: {
+    name?: string[];
+    slug?: string[];
+  };
+  message?: string | null;
+};
+export type ProductState = {
+  errors?: {
+    name?: string[];
+    slug?: string[];
+    description?: string[];
+    price?: string[];
+    stock?: string[];
+    categoryId?: string[];
+    brandId?: string[];
+    images?: string[];
+  };
+  message?: string | null;
+};
+export type CouponState = {
+  errors?: {
+    code?: string[];
+    description?: string[];
+    discountType?: string[];
+    discountValue?: string[];
+    minOrderValue?: string[];
+    isActive?: string[];
+    expiresAt?: string[];
+  };
+  message?: string | null;
+};
+export type OrderState = {
+  errors?: {
+    status?: string[];
   };
   message?: string | null;
 };
@@ -48,6 +95,73 @@ const SignupSchema = z.object({
 const CreateInvoice = FormSchema.omit({ id: true, date: true });
 const UpdateInvoice = FormSchema.omit({ id: true, date: true });
 const SignupUser = SignupSchema.omit({});
+
+// Category Schemas
+const CategorySchema = z.object({
+  id: z.string(),
+  name: z.string({
+    invalid_type_error: "Category name is required",
+  }).min(1, { message: 'Category name is required' }),
+  slug: z.string().optional(), // Slug is auto-generated from name
+  description: z.string().optional(),
+});
+const CreateCategory = CategorySchema.omit({ id: true });
+const UpdateCategory = CategorySchema.omit({ id: true });
+
+// Brand Schemas
+const BrandSchema = z.object({
+  id: z.string(),
+  name: z.string({
+    invalid_type_error: "Brand name is required",
+  }).min(1, { message: 'Brand name is required' }),
+  slug: z.string().optional(), // Slug is auto-generated from name
+});
+const CreateBrand = BrandSchema.omit({ id: true });
+const UpdateBrand = BrandSchema.omit({ id: true });
+
+// Product Schemas
+const ProductSchema = z.object({
+  id: z.string(),
+  name: z.string({
+    invalid_type_error: "Product name is required",
+  }).min(1, { message: 'Product name is required' }),
+  slug: z.string().optional(), // Slug is auto-generated from name
+  description: z.string().optional(),
+  price: z.coerce.number().gt(0, { message: 'Price must be greater than 0' }),
+  stock: z.coerce.number().int().min(0, { message: 'Stock must be a non-negative integer' }),
+  categoryId: z.string().optional(),
+  brandId: z.string().optional(),
+  images: z.string().optional(), // JSON string, will be parsed
+});
+const CreateProduct = ProductSchema.omit({ id: true });
+const UpdateProduct = ProductSchema.omit({ id: true });
+
+// Coupon Schemas
+const CouponSchema = z.object({
+  id: z.string(),
+  code: z.string({
+    invalid_type_error: "Coupon code is required",
+  }).min(1, { message: 'Coupon code is required' }).regex(/^[A-Z0-9_-]+$/, { message: 'Code must be uppercase alphanumeric with hyphens or underscores' }),
+  description: z.string().optional(),
+  discountType: z.enum(['PERCENTAGE', 'FIXED'], {
+    invalid_type_error: "Discount type is required",
+  }),
+  discountValue: z.coerce.number().gt(0, { message: 'Discount value must be greater than 0' }),
+  minOrderValue: z.coerce.number().min(0, { message: 'Minimum order value must be non-negative' }).optional(),
+  isActive: z.coerce.boolean().optional(),
+  expiresAt: z.string().optional(), // ISO date string
+});
+const CreateCoupon = CouponSchema.omit({ id: true });
+const UpdateCoupon = CouponSchema.omit({ id: true });
+
+// Order Schemas (only status update)
+const OrderSchema = z.object({
+  id: z.string(),
+  status: z.enum(['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'], {
+    invalid_type_error: "Order status is required",
+  }),
+});
+const UpdateOrderStatus = OrderSchema.omit({ id: true });
 export async function createInvoice(prevState: State, formData: FormData) {
   const validatedFields = CreateInvoice.safeParse({
     customerId: formData.get('customerId'),
@@ -173,4 +287,633 @@ export async function signup(
     };
   }
   redirect('/login');
+}
+
+// Category CRUD Actions
+export async function createCategory(prevState: CategoryState, formData: FormData) {
+  const validatedFields = CreateCategory.safeParse({
+    name: formData.get('name'),
+    slug: formData.get('slug') || undefined,
+    description: formData.get('description') || undefined,
+  });
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: 'Missing Fields. Failed to Create Category.',
+    };
+  }
+
+  const { name, slug, description } = validatedFields.data;
+
+  // Auto-generate slug from name if not provided
+  const finalSlug = slug || await generateUniqueCategorySlug(name);
+
+  try {
+    await prisma.category.create({
+      data: {
+        name,
+        slug: finalSlug,
+        description: description || null,
+      },
+    });
+  } catch (error: any) {
+    console.error(error);
+    if (error?.code === 'P2002') {
+      // If slug conflict, regenerate and retry once
+      const retrySlug = await generateUniqueCategorySlug(name);
+      try {
+        await prisma.category.create({
+          data: {
+            name,
+            slug: retrySlug,
+            description: description || null,
+          },
+        });
+      } catch (retryError) {
+        return {
+          message: 'Database Error: Failed to Create Category.',
+        };
+      }
+    } else {
+      return {
+        message: 'Database Error: Failed to Create Category.',
+      };
+    }
+  }
+
+  revalidatePath('/dashboard/categories');
+  redirect('/dashboard/categories');
+}
+
+export async function updateCategory(id: string, prevState: CategoryState, formData: FormData) {
+  const validatedFields = UpdateCategory.safeParse({
+    name: formData.get('name'),
+    slug: formData.get('slug') || undefined,
+    description: formData.get('description') || undefined,
+  });
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: 'Missing Fields. Failed to Update Category.',
+    };
+  }
+
+  const { name, slug, description } = validatedFields.data;
+
+  // Get current category to check if name changed
+  const currentCategory = await prisma.category.findUnique({ where: { id } });
+  
+  // Auto-generate slug from name if not provided or if name changed
+  const finalSlug = slug || (currentCategory?.name !== name 
+    ? await generateUniqueCategorySlug(name, id)
+    : currentCategory.slug);
+
+  try {
+    await prisma.category.update({
+      where: { id },
+      data: {
+        name,
+        slug: finalSlug,
+        description: description || null,
+      },
+    });
+  } catch (error: any) {
+    console.error(error);
+    if (error?.code === 'P2002') {
+      // If slug conflict, regenerate and retry once
+      const retrySlug = await generateUniqueCategorySlug(name, id);
+      try {
+        await prisma.category.update({
+          where: { id },
+          data: {
+            name,
+            slug: retrySlug,
+            description: description || null,
+          },
+        });
+      } catch (retryError) {
+        return {
+          message: 'Database Error: Failed to Update Category.',
+        };
+      }
+    } else {
+      return {
+        message: 'Database Error: Failed to Update Category.',
+      };
+    }
+  }
+
+  revalidatePath('/dashboard/categories');
+  redirect('/dashboard/categories');
+}
+
+export async function deleteCategory(id: string) {
+  try {
+    await prisma.category.delete({
+      where: { id },
+    });
+  } catch (error) {
+    console.error(error);
+    throw new Error('Failed to delete category.');
+  }
+  revalidatePath('/dashboard/categories');
+}
+
+// Brand CRUD Actions
+export async function createBrand(prevState: BrandState, formData: FormData) {
+  const validatedFields = CreateBrand.safeParse({
+    name: formData.get('name'),
+    slug: formData.get('slug') || undefined,
+  });
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: 'Missing Fields. Failed to Create Brand.',
+    };
+  }
+
+  const { name, slug } = validatedFields.data;
+
+  // Auto-generate slug from name if not provided
+  const finalSlug = slug || await generateUniqueBrandSlug(name);
+
+  try {
+    await prisma.brand.create({
+      data: {
+        name,
+        slug: finalSlug,
+      },
+    });
+  } catch (error: any) {
+    console.error(error);
+    if (error?.code === 'P2002') {
+      // If slug conflict, regenerate and retry once
+      const retrySlug = await generateUniqueBrandSlug(name);
+      try {
+        await prisma.brand.create({
+          data: {
+            name,
+            slug: retrySlug,
+          },
+        });
+      } catch (retryError) {
+        return {
+          message: 'Database Error: Failed to Create Brand.',
+        };
+      }
+    } else {
+      return {
+        message: 'Database Error: Failed to Create Brand.',
+      };
+    }
+  }
+
+  revalidatePath('/dashboard/brands');
+  redirect('/dashboard/brands');
+}
+
+export async function updateBrand(id: string, prevState: BrandState, formData: FormData) {
+  const validatedFields = UpdateBrand.safeParse({
+    name: formData.get('name'),
+    slug: formData.get('slug') || undefined,
+  });
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: 'Missing Fields. Failed to Update Brand.',
+    };
+  }
+
+  const { name, slug } = validatedFields.data;
+
+  // Get current brand to check if name changed
+  const currentBrand = await prisma.brand.findUnique({ where: { id } });
+  
+  // Auto-generate slug from name if not provided or if name changed
+  const finalSlug = slug || (currentBrand?.name !== name 
+    ? await generateUniqueBrandSlug(name, id)
+    : currentBrand.slug);
+
+  try {
+    await prisma.brand.update({
+      where: { id },
+      data: {
+        name,
+        slug: finalSlug,
+      },
+    });
+  } catch (error: any) {
+    console.error(error);
+    if (error?.code === 'P2002') {
+      // If slug conflict, regenerate and retry once
+      const retrySlug = await generateUniqueBrandSlug(name, id);
+      try {
+        await prisma.brand.update({
+          where: { id },
+          data: {
+            name,
+            slug: retrySlug,
+          },
+        });
+      } catch (retryError) {
+        return {
+          message: 'Database Error: Failed to Update Brand.',
+        };
+      }
+    } else {
+      return {
+        message: 'Database Error: Failed to Update Brand.',
+      };
+    }
+  }
+
+  revalidatePath('/dashboard/brands');
+  redirect('/dashboard/brands');
+}
+
+export async function deleteBrand(id: string) {
+  try {
+    await prisma.brand.delete({
+      where: { id },
+    });
+  } catch (error) {
+    console.error(error);
+    throw new Error('Failed to delete brand.');
+  }
+  revalidatePath('/dashboard/brands');
+}
+
+// Product CRUD Actions
+export async function createProduct(prevState: ProductState, formData: FormData) {
+  const validatedFields = CreateProduct.safeParse({
+    name: formData.get('name'),
+    slug: formData.get('slug') || undefined,
+    description: formData.get('description') || undefined,
+    price: formData.get('price'),
+    stock: formData.get('stock'),
+    categoryId: formData.get('categoryId') || undefined,
+    brandId: formData.get('brandId') || undefined,
+    images: formData.get('images') || undefined,
+  });
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: 'Missing Fields. Failed to Create Product.',
+    };
+  }
+
+  const { name, slug, description, price, stock, categoryId, brandId, images } = validatedFields.data;
+
+  // Auto-generate slug from name if not provided
+  const finalSlug = slug || await generateUniqueProductSlug(name);
+
+  // Parse images JSON if provided - format: [{url: string, isDefault: boolean}, ...]
+  let imagesJson = null;
+  if (images && images.trim()) {
+    try {
+      const parsed = JSON.parse(images);
+      // Ensure at least one image is marked as default if images exist
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        const hasDefault = parsed.some((img: any) => img.isDefault);
+        if (!hasDefault && parsed.length > 0) {
+          parsed[0].isDefault = true;
+        }
+        imagesJson = parsed;
+      } else {
+        imagesJson = [];
+      }
+    } catch {
+      return {
+        errors: { images: ['Invalid JSON format for images'] },
+        message: 'Invalid images JSON format.',
+      };
+    }
+  }
+
+  try {
+    await prisma.product.create({
+      data: {
+        name,
+        slug: finalSlug,
+        description: description || null,
+        price,
+        stock,
+        images: imagesJson || [],
+        categoryId: categoryId || null,
+        brandId: brandId || null,
+      },
+    });
+  } catch (error: any) {
+    console.error(error);
+    if (error?.code === 'P2002') {
+      // If slug conflict, regenerate and retry once
+      const retrySlug = await generateUniqueProductSlug(name);
+      try {
+        await prisma.product.create({
+          data: {
+            name,
+            slug: retrySlug,
+            description: description || null,
+            price,
+            stock,
+            images: imagesJson || [],
+            categoryId: categoryId || null,
+            brandId: brandId || null,
+          },
+        });
+      } catch (retryError) {
+        return {
+          message: 'Database Error: Failed to Create Product.',
+        };
+      }
+    } else {
+      return {
+        message: 'Database Error: Failed to Create Product.',
+      };
+    }
+  }
+
+  revalidatePath('/dashboard/products');
+  redirect('/dashboard/products');
+}
+
+export async function updateProduct(id: string, prevState: ProductState, formData: FormData) {
+  const validatedFields = UpdateProduct.safeParse({
+    name: formData.get('name'),
+    slug: formData.get('slug') || undefined,
+    description: formData.get('description') || undefined,
+    price: formData.get('price'),
+    stock: formData.get('stock'),
+    categoryId: formData.get('categoryId') || undefined,
+    brandId: formData.get('brandId') || undefined,
+    images: formData.get('images') || undefined,
+  });
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: 'Missing Fields. Failed to Update Product.',
+    };
+  }
+
+  const { name, slug, description, price, stock, categoryId, brandId, images } = validatedFields.data;
+
+  // Get current product to check if name changed
+  const currentProduct = await prisma.product.findUnique({ where: { id } });
+  
+  // Auto-generate slug from name if not provided or if name changed
+  const finalSlug = slug || (currentProduct?.name !== name 
+    ? await generateUniqueProductSlug(name, id)
+    : currentProduct.slug);
+
+  // Parse images JSON if provided - format: [{url: string, isDefault: boolean}, ...]
+  let imagesJson = undefined;
+  if (images && images.trim()) {
+    try {
+      const parsed = JSON.parse(images);
+      // Ensure at least one image is marked as default if images exist
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        const hasDefault = parsed.some((img: any) => img.isDefault);
+        if (!hasDefault) {
+          parsed[0].isDefault = true;
+        }
+        imagesJson = parsed;
+      } else {
+        imagesJson = [];
+      }
+    } catch {
+      return {
+        errors: { images: ['Invalid JSON format for images'] },
+        message: 'Invalid images JSON format.',
+      };
+    }
+  }
+
+  try {
+    const updateData: any = {
+      name,
+      slug: finalSlug,
+      description: description || null,
+      price,
+      stock,
+      categoryId: categoryId || null,
+      brandId: brandId || null,
+    };
+    if (imagesJson !== undefined) {
+      updateData.images = imagesJson;
+    }
+
+    await prisma.product.update({
+      where: { id },
+      data: updateData,
+    });
+  } catch (error: any) {
+    console.error(error);
+    if (error?.code === 'P2002') {
+      // If slug conflict, regenerate and retry once
+      const retrySlug = await generateUniqueProductSlug(name, id);
+      try {
+        const retryUpdateData: any = {
+          name,
+          slug: retrySlug,
+          description: description || null,
+          price,
+          stock,
+          categoryId: categoryId || null,
+          brandId: brandId || null,
+        };
+        if (imagesJson !== undefined) {
+          retryUpdateData.images = imagesJson;
+        }
+        await prisma.product.update({
+          where: { id },
+          data: retryUpdateData,
+        });
+      } catch (retryError) {
+        return {
+          message: 'Database Error: Failed to Update Product.',
+        };
+      }
+    } else {
+      return {
+        message: 'Database Error: Failed to Update Product.',
+      };
+    }
+  }
+
+  revalidatePath('/dashboard/products');
+  redirect('/dashboard/products');
+}
+
+export async function deleteProduct(id: string) {
+  try {
+    await prisma.product.delete({
+      where: { id },
+    });
+  } catch (error) {
+    console.error(error);
+    throw new Error('Failed to delete product.');
+  }
+  revalidatePath('/dashboard/products');
+}
+
+// Coupon CRUD Actions
+export async function createCoupon(prevState: CouponState, formData: FormData) {
+  const validatedFields = CreateCoupon.safeParse({
+    code: formData.get('code'),
+    description: formData.get('description') || undefined,
+    discountType: formData.get('discountType'),
+    discountValue: formData.get('discountValue'),
+    minOrderValue: formData.get('minOrderValue') || undefined,
+    isActive: formData.get('isActive') === 'true' || formData.get('isActive') === 'on',
+    expiresAt: formData.get('expiresAt') || undefined,
+  });
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: 'Missing Fields. Failed to Create Coupon.',
+    };
+  }
+
+  const { code, description, discountType, discountValue, minOrderValue, isActive, expiresAt } = validatedFields.data;
+
+  try {
+    await prisma.coupon.create({
+      data: {
+        code,
+        description: description || null,
+        discountType,
+        discountValue,
+        minOrderValue: minOrderValue || null,
+        isActive: isActive !== undefined ? isActive : true,
+        expiresAt: expiresAt ? new Date(expiresAt) : null,
+      },
+    });
+  } catch (error: any) {
+    console.error(error);
+    if (error?.code === 'P2002') {
+      return {
+        message: 'Coupon code already exists. Please use a different code.',
+        errors: { code: ['Code must be unique'] },
+      };
+    }
+    return {
+      message: 'Database Error: Failed to Create Coupon.',
+    };
+  }
+
+  revalidatePath('/dashboard/coupons');
+  redirect('/dashboard/coupons');
+}
+
+export async function updateCoupon(id: string, prevState: CouponState, formData: FormData) {
+  const validatedFields = UpdateCoupon.safeParse({
+    code: formData.get('code'),
+    description: formData.get('description') || undefined,
+    discountType: formData.get('discountType'),
+    discountValue: formData.get('discountValue'),
+    minOrderValue: formData.get('minOrderValue') || undefined,
+    isActive: formData.get('isActive') === 'true' || formData.get('isActive') === 'on',
+    expiresAt: formData.get('expiresAt') || undefined,
+  });
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: 'Missing Fields. Failed to Update Coupon.',
+    };
+  }
+
+  const { code, description, discountType, discountValue, minOrderValue, isActive, expiresAt } = validatedFields.data;
+
+  try {
+    await prisma.coupon.update({
+      where: { id },
+      data: {
+        code,
+        description: description || null,
+        discountType,
+        discountValue,
+        minOrderValue: minOrderValue || null,
+        isActive: isActive !== undefined ? isActive : true,
+        expiresAt: expiresAt ? new Date(expiresAt) : null,
+      },
+    });
+  } catch (error: any) {
+    console.error(error);
+    if (error?.code === 'P2002') {
+      return {
+        message: 'Coupon code already exists. Please use a different code.',
+        errors: { code: ['Code must be unique'] },
+      };
+    }
+    return {
+      message: 'Database Error: Failed to Update Coupon.',
+    };
+  }
+
+  revalidatePath('/dashboard/coupons');
+  redirect('/dashboard/coupons');
+}
+
+export async function deleteCoupon(id: string) {
+  try {
+    await prisma.coupon.delete({
+      where: { id },
+    });
+  } catch (error) {
+    console.error(error);
+    throw new Error('Failed to delete coupon.');
+  }
+  revalidatePath('/dashboard/coupons');
+}
+
+// Order Actions (Status Update Only)
+export async function updateOrderStatus(id: string, prevState: OrderState, formData: FormData) {
+  const validatedFields = UpdateOrderStatus.safeParse({
+    status: formData.get('status'),
+  });
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: 'Missing Fields. Failed to Update Order Status.',
+    };
+  }
+
+  const { status } = validatedFields.data;
+
+  try {
+    await prisma.order.update({
+      where: { id },
+      data: { status },
+    });
+  } catch (error: any) {
+    console.error(error);
+    return {
+      message: 'Database Error: Failed to Update Order Status.',
+    };
+  }
+
+  revalidatePath('/dashboard/orders');
+  redirect('/dashboard/orders');
+}
+
+// Review Actions (Delete Only)
+export async function deleteReview(id: string) {
+  try {
+    await prisma.review.delete({
+      where: { id },
+    });
+  } catch (error) {
+    console.error(error);
+    throw new Error('Failed to delete review.');
+  }
+  revalidatePath('/dashboard/reviews');
 }
