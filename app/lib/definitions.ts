@@ -1,7 +1,3 @@
-// This file contains type definitions for your data.
-// It describes the shape of the data, and what data type each property should accept.
-// For simplicity of teaching, we're manually defining these types.
-// However, these types are generated automatically if you're using an ORM such as Prisma.
 export type User = {
   id: string;
   name: string;
@@ -20,8 +16,6 @@ export type Invoice = {
   user_id: string;
   amount: number;
   date: string;
-  // In TypeScript, this is called a string union type.
-  // It means that the "status" property can only be one of the two strings: 'pending' or 'paid'.
   status: 'PENDING' | 'PAID';
 };
 
@@ -38,7 +32,6 @@ export type LatestInvoice = {
   amount: string;
 };
 
-// The database returns a number for amount, but we later format it to a string with the formatCurrency function
 export type LatestInvoiceRaw = Omit<LatestInvoice, 'amount'> & {
   amount: number;
 };
@@ -84,4 +77,40 @@ export type InvoiceForm = {
   user_id: string;
   amount: number;
   status: 'PENDING' | 'PAID';
+};
+
+export type CategoryField = {
+  id: string;
+  name: string;
+};
+
+export type BrandField = {
+  id: string;
+  name: string;
+};
+
+export type Variant = {
+  id: string;
+  name: string;
+  sku: string;
+  price: number;
+  stock: number;
+  attributes: any;
+  productId: string;
+};
+
+export type Product = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  price: number;
+  stock: number;
+  images: any;
+  categoryId: string | null;
+  brandId: string | null;
+  productType: 'SIMPLE' | 'VARIABLE';
+  variants: Variant[];
+  createdAt: Date;
+  updatedAt: Date;
 };

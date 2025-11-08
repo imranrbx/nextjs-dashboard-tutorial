@@ -6,6 +6,7 @@ import { Button } from '@/app/ui/button';
 import { updateProduct, ProductState } from '@/app/lib/actions';
 import { useActionState, useState } from 'react';
 import ImageUpload from './image-upload';
+import VariationsForm from './variations-form';
 
 // Client-side slug generation function (matches server-side logic)
 function generateSlug(text: string): string {
@@ -37,8 +38,10 @@ interface Product {
   images: any;
   categoryId: string | null;
   brandId: string | null;
+  productType: string;
   category?: { id: string; name: string } | null;
   brand?: { id: string; name: string } | null;
+  variants?: any[];
 }
 
 export default function EditProductForm({
@@ -54,6 +57,8 @@ export default function EditProductForm({
   const updateProductWithId = updateProduct.bind(null, product.id);
   const [state, formAction, isPending] = useActionState(updateProductWithId, initialState);
   const [slugPreview, setSlugPreview] = useState(product.slug);
+  const [productType, setProductType] = useState(product.productType || 'SIMPLE');
+  const [variations, setVariations] = useState(product.variants || []);
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const name = e.target.value;
@@ -99,7 +104,8 @@ export default function EditProductForm({
 
   return (
     <form action={formAction}>
-      <div className="rounded-md bg-gray-50 p-4 md:p-6">
+        <input type="hidden" name="variations" value={JSON.stringify(variations)} />
+        <div className="rounded-md bg-gray-50 p-4 md:p-6">
         {/* Product Name */}
         <div className="mb-4">
           <label htmlFor="name" className="mb-2 block text-sm font-medium">
@@ -144,7 +150,7 @@ export default function EditProductForm({
               id="slug"
               name="slug"
               type="text"
-              defaultValue={product.slug}
+              value={slugPreview}
               className="peer block w-full rounded-md border border-gray-200 bg-gray-50 py-2 pl-10 text-sm outline-2 placeholder:text-gray-500"
               readOnly
               aria-describedby="slug-info"
@@ -156,55 +162,73 @@ export default function EditProductForm({
           </p>
         </div>
 
-        {/* Price and Stock */}
-        <div className="mb-4 grid grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="price" className="mb-2 block text-sm font-medium">
-              Price
-            </label>
-            <input
-              id="price"
-              name="price"
-              type="number"
-              step="0.01"
-              defaultValue={product.price}
-              className="peer block w-full rounded-md border border-gray-200 py-2 px-3 text-sm outline-2 placeholder:text-gray-500"
-              required
-              aria-describedby="price-error"
-            />
-            <div id="price-error" aria-live="polite" aria-atomic="true">
-              {state.errors?.price &&
-                state.errors.price.map((error: string) => (
-                  <p className="mt-2 text-sm text-red-500" key={error}>
-                    {error}
-                  </p>
-                ))}
-            </div>
-          </div>
-          <div>
-            <label htmlFor="stock" className="mb-2 block text-sm font-medium">
-              Stock
-            </label>
-            <input
-              id="stock"
-              name="stock"
-              type="number"
-              min="0"
-              defaultValue={product.stock}
-              className="peer block w-full rounded-md border border-gray-200 py-2 px-3 text-sm outline-2 placeholder:text-gray-500"
-              required
-              aria-describedby="stock-error"
-            />
-            <div id="stock-error" aria-live="polite" aria-atomic="true">
-              {state.errors?.stock &&
-                state.errors.stock.map((error: string) => (
-                  <p className="mt-2 text-sm text-red-500" key={error}>
-                    {error}
-                  </p>
-                ))}
-            </div>
-          </div>
+        {/* Product Type */}
+        <div className="mb-4">
+          <label htmlFor="productType" className="mb-2 block text-sm font-medium">
+            Product Type
+          </label>
+          <select
+            id="productType"
+            name="productType"
+            className="peer block w-full cursor-pointer rounded-md border border-gray-200 py-2 px-3 text-sm outline-2 placeholder:text-gray-500"
+            value={productType}
+            onChange={(e) => setProductType(e.target.value)}
+          >
+            <option value="SIMPLE">Simple Product</option>
+            <option value="VARIABLE">Variable Product</option>
+          </select>
         </div>
+
+        {productType === 'SIMPLE' && (
+          <div className="mb-4 grid grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="price" className="mb-2 block text-sm font-medium">
+                Price
+              </label>
+              <input
+                id="price"
+                name="price"
+                type="number"
+                step="0.01"
+                defaultValue={product.price}
+                className="peer block w-full rounded-md border border-gray-200 py-2 px-3 text-sm outline-2 placeholder:text-gray-500"
+                aria-describedby="price-error"
+              />
+              <div id="price-error" aria-live="polite" aria-atomic="true">
+                {state.errors?.price &&
+                  state.errors.price.map((error: string) => (
+                    <p className="mt-2 text-sm text-red-500" key={error}>
+                      {error}
+                    </p>
+                  ))}
+              </div>
+            </div>
+            <div>
+              <label htmlFor="stock" className="mb-2 block text-sm font-medium">
+                Stock
+              </label>
+              <input
+                id="stock"
+                name="stock"
+                type="number"
+                min="0"
+                defaultValue={product.stock}
+                className="peer block w-full rounded-md border border-gray-200 py-2 px-3 text-sm outline-2 placeholder:text-gray-500"
+                aria-describedby="stock-error"
+              />
+              <div id="stock-error" aria-live="polite" aria-atomic="true">
+                {state.errors?.stock &&
+                  state.errors.stock.map((error: string) => (
+                    <p className="mt-2 text-sm text-red-500" key={error}>
+                      {error}
+                    </p>
+                  ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {productType === 'VARIABLE' && <VariationsForm variations={variations} setVariations={setVariations} />}
 
         {/* Category and Brand */}
         <div className="mb-4 grid grid-cols-2 gap-4">

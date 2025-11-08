@@ -120,21 +120,76 @@ const CreateBrand = BrandSchema.omit({ id: true });
 const UpdateBrand = BrandSchema.omit({ id: true });
 
 // Product Schemas
-const ProductSchema = z.object({
+const ProductSchemaBase = z.object({
   id: z.string(),
   name: z.string({
     invalid_type_error: "Product name is required",
   }).min(1, { message: 'Product name is required' }),
   slug: z.string().optional(), // Slug is auto-generated from name
   description: z.string().optional(),
-  price: z.coerce.number().gt(0, { message: 'Price must be greater than 0' }),
-  stock: z.coerce.number().int().min(0, { message: 'Stock must be a non-negative integer' }),
+  price: z.coerce.number().optional(),
+  stock: z.coerce.number().int().optional(),
   categoryId: z.string().optional(),
   brandId: z.string().optional(),
   images: z.string().optional(), // JSON string, will be parsed
+  productType: z.enum(['SIMPLE', 'VARIABLE']),
 });
-const CreateProduct = ProductSchema.omit({ id: true });
-const UpdateProduct = ProductSchema.omit({ id: true });
+
+const ProductSchema = ProductSchemaBase.superRefine((data, ctx) => {
+  if (data.productType === 'SIMPLE') {
+    if (data.price === undefined || data.price <= 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['price'],
+        message: 'Price must be greater than 0 for simple products',
+      });
+    }
+    if (data.stock === undefined || data.stock < 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['stock'],
+        message: 'Stock must be a non-negative integer for simple products',
+      });
+    }
+  }
+});
+
+const CreateProduct = ProductSchemaBase.omit({ id: true }).superRefine((data, ctx) => {
+  if (data.productType === 'SIMPLE') {
+    if (data.price === undefined || data.price <= 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['price'],
+        message: 'Price must be greater than 0 for simple products',
+      });
+    }
+    if (data.stock === undefined || data.stock < 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['stock'],
+        message: 'Stock must be a non-negative integer for simple products',
+      });
+    }
+  }
+});
+const UpdateProduct = ProductSchemaBase.omit({ id: true }).superRefine((data, ctx) => {
+  if (data.productType === 'SIMPLE') {
+    if (data.price === undefined || data.price <= 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['price'],
+        message: 'Price must be greater than 0 for simple products',
+      });
+    }
+    if (data.stock === undefined || data.stock < 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['stock'],
+        message: 'Stock must be a non-negative integer for simple products',
+      });
+    }
+  }
+});
 
 // Coupon Schemas
 const CouponSchema = z.object({
@@ -364,9 +419,9 @@ export async function updateCategory(id: string, prevState: CategoryState, formD
 
   // Get current category to check if name changed
   const currentCategory = await prisma.category.findUnique({ where: { id } });
-  
+
   // Auto-generate slug from name if not provided or if name changed
-  const finalSlug = slug || (currentCategory?.name !== name 
+  const finalSlug = slug || (currentCategory?.name !== name
     ? await generateUniqueCategorySlug(name, id)
     : currentCategory.slug);
 
@@ -492,9 +547,9 @@ export async function updateBrand(id: string, prevState: BrandState, formData: F
 
   // Get current brand to check if name changed
   const currentBrand = await prisma.brand.findUnique({ where: { id } });
-  
+
   // Auto-generate slug from name if not provided or if name changed
-  const finalSlug = slug || (currentBrand?.name !== name 
+  const finalSlug = slug || (currentBrand?.name !== name
     ? await generateUniqueBrandSlug(name, id)
     : currentBrand.slug);
 
@@ -549,6 +604,9 @@ export async function deleteBrand(id: string) {
 
 // Product CRUD Actions
 export async function createProduct(prevState: ProductState, formData: FormData) {
+  const variationsData = formData.get('variations');
+  const variations = variationsData ? JSON.parse(variationsData as string) : [];
+
   const validatedFields = CreateProduct.safeParse({
     name: formData.get('name'),
     slug: formData.get('slug') || undefined,
@@ -558,6 +616,7 @@ export async function createProduct(prevState: ProductState, formData: FormData)
     categoryId: formData.get('categoryId') || undefined,
     brandId: formData.get('brandId') || undefined,
     images: formData.get('images') || undefined,
+    productType: formData.get('productType'),
   });
 
   if (!validatedFields.success) {
@@ -567,8 +626,16 @@ export async function createProduct(prevState: ProductState, formData: FormData)
     };
   }
 
-  const { name, slug, description, price, stock, categoryId, brandId, images } = validatedFields.data;
+  const { name, slug, description, categoryId, brandId, images, productType } = validatedFields.data;
+  let { price, stock } = validatedFields.data;
 
+  // If product is variable, price and stock are 0
+  if (productType === 'VARIABLE') {
+    price = 0;
+    stock = 0;
+  }
+  price = price ?? 0;
+  stock = stock ?? 0;
   // Auto-generate slug from name if not provided
   const finalSlug = slug || await generateUniqueProductSlug(name);
 
@@ -606,6 +673,16 @@ export async function createProduct(prevState: ProductState, formData: FormData)
         images: imagesJson || [],
         categoryId: categoryId || null,
         brandId: brandId || null,
+        productType,
+        variants: {
+          create: variations.map((variant: any) => ({
+            name: variant.name,
+            sku: variant.sku,
+            price: variant.price,
+            stock: variant.stock,
+            attributes: variant.attributes,
+          })),
+        },
       },
     });
   } catch (error: any) {
@@ -624,6 +701,16 @@ export async function createProduct(prevState: ProductState, formData: FormData)
             images: imagesJson || [],
             categoryId: categoryId || null,
             brandId: brandId || null,
+            productType,
+            variants: {
+              create: variations.map((variant: any) => ({
+                name: variant.name,
+                sku: variant.sku,
+                price: variant.price,
+                stock: variant.stock,
+                attributes: variant.attributes,
+              })),
+            },
           },
         });
       } catch (retryError) {
@@ -643,6 +730,8 @@ export async function createProduct(prevState: ProductState, formData: FormData)
 }
 
 export async function updateProduct(id: string, prevState: ProductState, formData: FormData) {
+  const variationsData = formData.get('variations');
+  const variations = variationsData ? JSON.parse(variationsData as string) : [];
   const validatedFields = UpdateProduct.safeParse({
     name: formData.get('name'),
     slug: formData.get('slug') || undefined,
@@ -652,8 +741,8 @@ export async function updateProduct(id: string, prevState: ProductState, formDat
     categoryId: formData.get('categoryId') || undefined,
     brandId: formData.get('brandId') || undefined,
     images: formData.get('images') || undefined,
+    productType: formData.get('productType'),
   });
-
   if (!validatedFields.success) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,
@@ -661,15 +750,27 @@ export async function updateProduct(id: string, prevState: ProductState, formDat
     };
   }
 
-  const { name, slug, description, price, stock, categoryId, brandId, images } = validatedFields.data;
+  const { name, slug, description, categoryId, brandId, images, productType } = validatedFields.data;
+  let { price, stock } = validatedFields.data;
 
   // Get current product to check if name changed
   const currentProduct = await prisma.product.findUnique({ where: { id } });
-  
+  if (!currentProduct) {
+    return {
+      message: 'Product not found.',
+    };
+  }
+
   // Auto-generate slug from name if not provided or if name changed
-  const finalSlug = slug || (currentProduct?.name !== name 
+  const finalSlug = slug || (currentProduct?.name !== name
     ? await generateUniqueProductSlug(name, id)
     : currentProduct.slug);
+
+  // If product is variable, price and stock are 0
+  if (productType === 'VARIABLE') {
+    price = 0;
+    stock = 0;
+  }
 
   // Parse images JSON if provided - format: [{url: string, isDefault: boolean}, ...]
   let imagesJson = undefined;
@@ -695,22 +796,69 @@ export async function updateProduct(id: string, prevState: ProductState, formDat
   }
 
   try {
-    const updateData: any = {
-      name,
-      slug: finalSlug,
-      description: description || null,
-      price,
-      stock,
-      categoryId: categoryId || null,
-      brandId: brandId || null,
-    };
-    if (imagesJson !== undefined) {
-      updateData.images = imagesJson;
-    }
+    await prisma.$transaction(async (tx) => {
+      const updateData: any = {
+        name,
+        slug: finalSlug,
+        description: description || null,
+        price: price,
+        stock: stock,
+        categoryId: categoryId || null,
+        brandId: brandId || null,
+        productType,
+      };
+      if (imagesJson !== undefined) {
+        updateData.images = imagesJson;
+      }
 
-    await prisma.product.update({
-      where: { id },
-      data: updateData,
+      await tx.product.update({
+        where: { id },
+        data: updateData,
+      });
+
+      if (productType === 'VARIABLE') {
+        const existingVariants = await tx.variant.findMany({ where: { productId: id } });
+        const existingVariantIds = existingVariants.map((v) => v.id);
+        const incomingVariantIds = variations.map((v: any) => v.id).filter(Boolean);
+
+        // Delete variants that are no longer present
+        const variantsToDelete = existingVariantIds.filter((variantId) => !incomingVariantIds.includes(variantId));
+        if (variantsToDelete.length > 0) {
+          await tx.variant.deleteMany({ where: { id: { in: variantsToDelete } } });
+        }
+
+        // Create or update variants
+        for (const variant of variations) {
+          if (variant.id) {
+            // Update existing variant
+            await tx.variant.update({
+              where: { id: variant.id },
+              data: {
+                name: variant.name,
+                sku: variant.sku,
+                price: variant.price,
+                stock: variant.stock,
+                attributes: variant.attributes,
+              },
+            });
+          } else {
+            // Create new variant
+            await tx.variant.create({
+              data: {
+                productId: id,
+                name: variant.name,
+                sku: variant.sku,
+                price: variant.price,
+                stock: variant.stock,
+                attributes: variant.attributes,
+              },
+            });
+          }
+        }
+      } else {
+        // If the product is simple, delete all existing variants
+        await tx.variant.deleteMany({ where: { productId: id } });
+      }
     });
   } catch (error: any) {
     console.error(error);
@@ -718,21 +866,67 @@ export async function updateProduct(id: string, prevState: ProductState, formDat
       // If slug conflict, regenerate and retry once
       const retrySlug = await generateUniqueProductSlug(name, id);
       try {
-        const retryUpdateData: any = {
-          name,
-          slug: retrySlug,
-          description: description || null,
-          price,
-          stock,
-          categoryId: categoryId || null,
-          brandId: brandId || null,
-        };
-        if (imagesJson !== undefined) {
-          retryUpdateData.images = imagesJson;
-        }
-        await prisma.product.update({
-          where: { id },
-          data: retryUpdateData,
+        await prisma.$transaction(async (tx) => {
+          const retryUpdateData: any = {
+            name,
+            slug: retrySlug,
+            description: description || null,
+            price,
+            stock,
+            categoryId: categoryId || null,
+            brandId: brandId || null,
+          };
+          if (imagesJson !== undefined) {
+            retryUpdateData.images = imagesJson;
+          }
+          await tx.product.update({
+            where: { id },
+            data: retryUpdateData,
+          });
+
+          if (productType === 'VARIABLE') {
+            const existingVariants = await tx.variant.findMany({ where: { productId: id } });
+            const existingVariantIds = existingVariants.map((v) => v.id);
+            const incomingVariantIds = variations.map((v: any) => v.id).filter(Boolean);
+
+            // Delete variants that are no longer present
+            const variantsToDelete = existingVariantIds.filter((variantId) => !incomingVariantIds.includes(variantId));
+            if (variantsToDelete.length > 0) {
+              await tx.variant.deleteMany({ where: { id: { in: variantsToDelete } } });
+            }
+
+            // Create or update variants
+            for (const variant of variations) {
+              if (variant.id) {
+                // Update existing variant
+                await tx.variant.update({
+                  where: { id: variant.id },
+                  data: {
+                    name: variant.name,
+                    sku: variant.sku,
+                    price: variant.price,
+                    stock: variant.stock,
+                    attributes: variant.attributes,
+                  },
+                });
+              } else {
+                // Create new variant
+                await tx.variant.create({
+                  data: {
+                    productId: id,
+                    name: variant.name,
+                    sku: variant.sku,
+                    price: variant.price,
+                    stock: variant.stock,
+                    attributes: variant.attributes,
+                  },
+                });
+              }
+            }
+          } else {
+            // If the product is simple, delete all existing variants
+            await tx.variant.deleteMany({ where: { productId: id } });
+          }
         });
       } catch (retryError) {
         return {

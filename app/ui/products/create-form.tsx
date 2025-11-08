@@ -5,6 +5,7 @@ import { Button } from '@/app/ui/button';
 import { createProduct, ProductState } from '@/app/lib/actions';
 import { useActionState, useState } from 'react';
 import ImageUpload from './image-upload';
+import VariationsForm from './variations-form';
 
 // Client-side slug generation function (matches server-side logic)
 function generateSlug(text: string): string {
@@ -36,6 +37,8 @@ export default function CreateProductForm({
   const initialState: ProductState = { errors: {}, message: null };
   const [state, formAction, isPending] = useActionState(createProduct, initialState);
   const [slugPreview, setSlugPreview] = useState('');
+  const [productType, setProductType] = useState('SIMPLE');
+  const [variations, setVariations] = useState<any[]>([]);
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const name = e.target.value;
@@ -45,6 +48,7 @@ export default function CreateProductForm({
 
   return (
     <form action={formAction}>
+      <input type="hidden" name="variations" value={JSON.stringify(variations)} />
       <div className="rounded-md bg-gray-50 p-4 md:p-6">
         {/* Product Name */}
         <div className="mb-4">
@@ -83,57 +87,77 @@ export default function CreateProductForm({
         </div>
 
         {/* Slug - Auto-generated from name, hidden */}
-        <input type="hidden" name="slug" value="" />
+        <input type="hidden" name="slug" value={slugPreview} />
 
-        {/* Price and Stock */}
-        <div className="mb-4 grid grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="price" className="mb-2 block text-sm font-medium">
-              Price
-            </label>
-            <input
-              id="price"
-              name="price"
-              type="number"
-              step="0.01"
-              placeholder="0.00"
-              className="peer block w-full rounded-md border border-gray-200 py-2 px-3 text-sm outline-2 placeholder:text-gray-500"
-              required
-              aria-describedby="price-error"
-            />
-            <div id="price-error" aria-live="polite" aria-atomic="true">
-              {state.errors?.price &&
-                state.errors.price.map((error: string) => (
-                  <p className="mt-2 text-sm text-red-500" key={error}>
-                    {error}
-                  </p>
-                ))}
-            </div>
-          </div>
-          <div>
-            <label htmlFor="stock" className="mb-2 block text-sm font-medium">
-              Stock
-            </label>
-            <input
-              id="stock"
-              name="stock"
-              type="number"
-              min="0"
-              placeholder="0"
-              className="peer block w-full rounded-md border border-gray-200 py-2 px-3 text-sm outline-2 placeholder:text-gray-500"
-              required
-              aria-describedby="stock-error"
-            />
-            <div id="stock-error" aria-live="polite" aria-atomic="true">
-              {state.errors?.stock &&
-                state.errors.stock.map((error: string) => (
-                  <p className="mt-2 text-sm text-red-500" key={error}>
-                    {error}
-                  </p>
-                ))}
-            </div>
-          </div>
+        {/* Product Type */}
+        <div className="mb-4">
+          <label htmlFor="productType" className="mb-2 block text-sm font-medium">
+            Product Type
+          </label>
+          <select
+            id="productType"
+            name="productType"
+            className="peer block w-full cursor-pointer rounded-md border border-gray-200 py-2 px-3 text-sm outline-2 placeholder:text-gray-500"
+            value={productType}
+            onChange={(e) => setProductType(e.target.value)}
+          >
+            <option value="SIMPLE">Simple Product</option>
+            <option value="VARIABLE">Variable Product</option>
+          </select>
         </div>
+
+        {productType === 'SIMPLE' && (
+          <div className="mb-4 grid grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="price" className="mb-2 block text-sm font-medium">
+                Price
+              </label>
+              <input
+                id="price"
+                name="price"
+                type="number"
+                step="0.01"
+                placeholder="0.00"
+                className="peer block w-full rounded-md border border-gray-200 py-2 px-3 text-sm outline-2 placeholder:text-gray-500"
+                required
+                aria-describedby="price-error"
+              />
+              <div id="price-error" aria-live="polite" aria-atomic="true">
+                {state.errors?.price &&
+                  state.errors.price.map((error: string) => (
+                    <p className="mt-2 text-sm text-red-500" key={error}>
+                      {error}
+                    </p>
+                  ))}
+              </div>
+            </div>
+            <div>
+              <label htmlFor="stock" className="mb-2 block text-sm font-medium">
+                Stock
+              </label>
+              <input
+                id="stock"
+                name="stock"
+                type="number"
+                min="0"
+                placeholder="0"
+                className="peer block w-full rounded-md border border-gray-200 py-2 px-3 text-sm outline-2 placeholder:text-gray-500"
+                required
+                aria-describedby="stock-error"
+              />
+              <div id="stock-error" aria-live="polite" aria-atomic="true">
+                {state.errors?.stock &&
+                  state.errors.stock.map((error: string) => (
+                    <p className="mt-2 text-sm text-red-500" key={error}>
+                      {error}
+                    </p>
+                  ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {productType === 'VARIABLE' && <VariationsForm variations={variations} setVariations={setVariations} />}
 
         {/* Category and Brand */}
         <div className="mb-4 grid grid-cols-2 gap-4">

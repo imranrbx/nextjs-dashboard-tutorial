@@ -1,7 +1,7 @@
 "use client";
 import { useState, useRef, useEffect } from 'react';
 import { PhotoIcon, XMarkIcon, StarIcon } from '@heroicons/react/24/outline';
-
+import Image from 'next/image'
 interface ImageData {
     url: string;
     isDefault: boolean;
@@ -27,8 +27,6 @@ export default function ImageUpload({ existingImages = [], onImagesChange }: Ima
                 isDefault: img.isDefault || false
             }));
             setImages(parsedImages);
-        } else {
-            setImages([]);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [existingImages?.length, existingImages]);
@@ -200,7 +198,7 @@ export default function ImageUpload({ existingImages = [], onImagesChange }: Ima
                         <div key={`${image.url}-${index}`} className="relative group">
                             <div className={`relative aspect-square rounded-lg overflow-hidden border-2 ${image.isDefault ? 'border-blue-500' : 'border-gray-200'
                                 }`}>
-                                <img
+                                <Image
                                     src={image.url.startsWith('http') ? image.url : image.url}
                                     alt={`Product image ${index + 1}`}
                                     className="w-full h-full object-cover"
@@ -211,6 +209,8 @@ export default function ImageUpload({ existingImages = [], onImagesChange }: Ima
                                         target.style.display = 'none';
                                     }}
                                     loading="lazy"
+                                    width={750}
+                                    height={450}
                                 />
 
                                 {/* Default badge */}

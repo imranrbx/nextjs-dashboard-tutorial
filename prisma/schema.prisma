@@ -101,6 +101,7 @@ model Product {
     categoryId    String?
     brand         Brand?      @relation(fields: [brandId], references: [id])
     brandId       String?
+    productType   ProductType @default(SIMPLE)
     variants      Variant[]
     reviews       Review[]
     wishlistItems Wishlist[]
@@ -110,6 +111,11 @@ model Product {
     updatedAt     DateTime    @updatedAt
 
     @@map("products")
+}
+
+enum ProductType {
+    SIMPLE
+    VARIABLE
 }
 
 model Variant {

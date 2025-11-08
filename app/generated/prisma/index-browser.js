@@ -170,6 +170,7 @@ exports.Prisma.ProductScalarFieldEnum = {
   images: 'images',
   categoryId: 'categoryId',
   brandId: 'brandId',
+  productType: 'productType',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -303,6 +304,11 @@ exports.Prisma.JsonNullValueFilter = {
 exports.Role = exports.$Enums.Role = {
   USER: 'USER',
   ADMIN: 'ADMIN'
+};
+
+exports.ProductType = exports.$Enums.ProductType = {
+  SIMPLE: 'SIMPLE',
+  VARIABLE: 'VARIABLE'
 };
 
 exports.OrderStatus = exports.$Enums.OrderStatus = {

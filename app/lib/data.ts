@@ -385,6 +385,7 @@ export async function fetchFilteredProducts(query: string, currentPage: number) 
       include: {
         category: { select: { name: true } },
         brand: { select: { name: true } },
+        variants: true,
       },
       orderBy: { createdAt: 'desc' },
       take: ITEMS_PER_PAGE,
@@ -428,6 +429,7 @@ export async function fetchProductById(id: string) {
       include: {
         category: { select: { id: true, name: true } },
         brand: { select: { id: true, name: true } },
+        variants: true,
       },
     });
 

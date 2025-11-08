@@ -1,6 +1,7 @@
 import { UpdateProduct, DeleteProduct } from '@/app/ui/products/buttons';
 import { formatDateToLocal, formatCurrency } from '@/app/lib/utils';
 import { fetchFilteredProducts } from '@/app/lib/data';
+import Thumbnail from './Thumbnail';
 
 export default async function ProductsTable({
   query,
@@ -25,6 +26,7 @@ export default async function ProductsTable({
                   <div>
                     <p className="text-sm font-medium">{product.name}</p>
                     <p className="text-sm text-gray-500">{product.slug}</p>
+                    <p className="text-xs text-gray-400">{product.productType}</p>
                     {product.category && (
                       <p className="text-xs text-gray-400">{product.category.name}</p>
                     )}
@@ -35,8 +37,14 @@ export default async function ProductsTable({
                 </div>
                 <div className="flex w-full items-center justify-between pt-4">
                   <div>
-                    <p className="text-xl font-medium">{formatCurrency(product.price)}</p>
-                    <p className="text-sm text-gray-500">Stock: {product.stock}</p>
+                    {product.productType === 'VARIABLE' ? (
+                      <p>{product.variants.length} variants</p>
+                    ) : (
+                      <>
+                        <p className="text-xl font-medium">{formatCurrency(product.price)}</p>
+                        <p className="text-sm text-gray-500">Stock: {product.stock}</p>
+                      </>
+                    )}
                     <p className="text-xs text-gray-400">
                       {formatDateToLocal(product.createdAt.toString())}
                     </p>
@@ -53,6 +61,9 @@ export default async function ProductsTable({
             <thead className="rounded-lg text-left text-sm font-normal">
               <tr>
                 <th scope="col" className="px-4 py-5 font-medium sm:pl-6">
+                  Thumbnail
+                </th>
+                <th scope="col" className="px-4 py-5 font-medium sm:pl-6">
                   Name
                 </th>
                 <th scope="col" className="px-3 py-5 font-medium">
@@ -60,6 +71,9 @@ export default async function ProductsTable({
                 </th>
                 <th scope="col" className="px-3 py-5 font-medium">
                   Brand
+                </th>
+                <th scope="col" className="px-3 py-5 font-medium">
+                  Product Type
                 </th>
                 <th scope="col" className="px-3 py-5 font-medium">
                   Price
@@ -76,11 +90,15 @@ export default async function ProductsTable({
               </tr>
             </thead>
             <tbody className="bg-white">
-              {products?.map((product) => (
+              {products.map((product) => (
+
                 <tr
                   key={product.id}
                   className="w-full border-b py-3 text-sm last-of-type:border-none [&:first-child>td:first-child]:rounded-tl-lg [&:first-child>td:last-child]:rounded-tr-lg [&:last-child>td:first-child]:rounded-bl-lg [&:last-child>td:last-child]:rounded-br-lg"
                 >
+                  <td className="whitespace-nowrap px-3 py-3">
+                    <Thumbnail images={product.images} />
+                  </td>
                   <td className="whitespace-nowrap py-3 pl-6 pr-3">
                     <p className="font-medium">{product.name}</p>
                     <code className="text-xs bg-gray-100 px-2 py-1 rounded">{product.slug}</code>
@@ -92,10 +110,21 @@ export default async function ProductsTable({
                     {product.brand?.name || 'N/A'}
                   </td>
                   <td className="whitespace-nowrap px-3 py-3">
-                    {formatCurrency(product.price)}
+                    {product.productType}
                   </td>
                   <td className="whitespace-nowrap px-3 py-3">
-                    {product.stock}
+                    {product.productType === 'VARIABLE' ? (
+                      <p>{product.variants.length} variants</p>
+                    ) : (
+                      formatCurrency(product.price)
+                    )}
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-3">
+                    {product.productType === 'VARIABLE' ? (
+                      <p>-</p>
+                    ) : (
+                      product.stock
+                    )}
                   </td>
                   <td className="whitespace-nowrap px-3 py-3">
                     {formatDateToLocal(product.createdAt.toString())}
@@ -107,6 +136,7 @@ export default async function ProductsTable({
                     </div>
                   </td>
                 </tr>
+
               ))}
             </tbody>
           </table>
