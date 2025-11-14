@@ -1,50 +1,85 @@
-import AcmeLogo from '@/app/ui/acme-logo';
-import { ArrowRightIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
-import styles from '@/app/ui/home.module.css';
-import { lusitana } from '@/app/ui/fonts';
 import Image from 'next/image';
+import { lusitana } from '@/app/ui/fonts';
+
 export default function Page() {
   return (
-    <main className="flex min-h-screen flex-col p-6">
-      <div className="flex h-20 shrink-0 items-end rounded-lg bg-blue-500 p-4 md:h-52">
-        <AcmeLogo />
-      </div>
-      <div className="mt-4 flex grow flex-col gap-4 md:flex-row">
-        <div className="flex flex-col justify-center gap-6 rounded-lg bg-gray-50 px-6 py-10 md:w-2/5 md:px-20">
-          <div className={styles.shape} />
-          <p
-            className={`${lusitana.className} text-xl text-gray-800 md:text-3xl md:leading-normal`}
-          >
-            <strong>Welcome to Acme.</strong> This is the example for the{' '}
-            <a href="https://nextjs.org/learn/" className="text-blue-500">
-              Next.js Learn Course
-            </a>
-            , brought to you by Vercel.
+    <main className="min-h-screen bg-gray-50">
+      <div className="mx-auto flex max-w-6xl flex-col gap-10 px-6 pb-16 pt-12 lg:flex-row lg:items-center">
+        <div className="flex-1 space-y-6">
+          <p className="text-sm font-semibold uppercase tracking-wide text-blue-600">
+            Acme Commerce
           </p>
-          <Link
-            href="/login"
-            className="flex items-center gap-5 self-start rounded-lg bg-blue-500 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-blue-400 md:text-base"
+          <h1
+            className={`${lusitana.className} text-4xl font-bold text-gray-900 md:text-5xl`}
           >
-            <span>Log in</span> <ArrowRightIcon className="w-5 md:w-6" />
-          </Link>
+            A modern shopping experience for thoughtful brands
+          </h1>
+          <p className="text-lg text-gray-600">
+            Browse curated products, personalize your cart, and track every
+            order from a unified user dashboard. Built with Next.js App Router and
+            Prisma for speed and reliability.
+          </p>
+          <div className="flex flex-wrap gap-4">
+            <Link
+              href="/shop"
+              className="rounded-full bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-500/30 transition hover:bg-blue-500"
+            >
+              Explore the shop
+            </Link>
+            <Link
+              href="/account/orders"
+              className="rounded-full border border-gray-300 px-6 py-3 text-sm font-semibold text-gray-900"
+            >
+              View user dashboard
+            </Link>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-3">
+            {[
+              ['Shop', 'Product detail, rich media, and reviews'],
+              ['Cart & checkout', 'Quantity controls and saved addresses'],
+              ['Order history', 'Track deliveries and past receipts'],
+            ].map(([title, body]) => (
+              <div
+                key={title}
+                className="rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-600"
+              >
+                <p className="text-base font-semibold text-gray-900">{title}</p>
+                <p className="mt-1">{body}</p>
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="flex items-center justify-center p-6 md:w-3/5 md:px-28 md:py-12">
-          {/* Add Hero Images Here */}
-          <Image
-            src="/hero-desktop.png"
-            width={1000}
-            height={760}
-            className="hidden md:block"
-            alt="Screenshots of the dashboard project showing desktop version"
-          />
-          <Image
-            src="/hero-mobile.png"
-            width={560}
-            height={620}
-            className="block md:hidden"
-            alt="Screenshot of the dashboard project showing mobile version"
-          />
+        <div className="flex-1">
+          <div className="relative overflow-hidden rounded-[32px] bg-gradient-to-br from-blue-600 to-indigo-500 p-1 shadow-2xl">
+            <div className="rounded-[28px] bg-white/95 p-6">
+              <Image
+                src="/hero-desktop.png"
+                alt="Dashboard preview"
+                width={1000}
+                height={760}
+                className="rounded-3xl border border-gray-100 shadow-lg"
+              />
+              <div className="mt-4 grid gap-3 text-sm text-gray-600 md:grid-cols-2">
+                <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">
+                    Checkout
+                  </p>
+                  <p className="mt-1 font-semibold text-gray-900">
+                    Saved addresses & secure payments
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">
+                    Order history
+                  </p>
+                  <p className="mt-1 font-semibold text-gray-900">
+                    Real-time status and receipts
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </main>

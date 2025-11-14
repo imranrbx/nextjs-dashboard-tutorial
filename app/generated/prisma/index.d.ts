@@ -511,8 +511,8 @@ export namespace Prisma {
   export import Exact = $Public.Exact
 
   /**
-   * Prisma Client JS version: 6.18.0
-   * Query Engine version: 34b5a692b7bd79939a9a2c3ef97d816e749cda2f
+   * Prisma Client JS version: 6.19.0
+   * Query Engine version: 2ba551f319ab1df4bc874a89965d8b3641056773
    */
   export type PrismaVersion = {
     client: string
@@ -12876,6 +12876,7 @@ export namespace Prisma {
     id: string | null
     cartId: string | null
     productId: string | null
+    variantSignature: string | null
     quantity: number | null
     price: number | null
     createdAt: Date | null
@@ -12885,6 +12886,7 @@ export namespace Prisma {
     id: string | null
     cartId: string | null
     productId: string | null
+    variantSignature: string | null
     quantity: number | null
     price: number | null
     createdAt: Date | null
@@ -12894,6 +12896,8 @@ export namespace Prisma {
     id: number
     cartId: number
     productId: number
+    variantSelections: number
+    variantSignature: number
     quantity: number
     price: number
     createdAt: number
@@ -12915,6 +12919,7 @@ export namespace Prisma {
     id?: true
     cartId?: true
     productId?: true
+    variantSignature?: true
     quantity?: true
     price?: true
     createdAt?: true
@@ -12924,6 +12929,7 @@ export namespace Prisma {
     id?: true
     cartId?: true
     productId?: true
+    variantSignature?: true
     quantity?: true
     price?: true
     createdAt?: true
@@ -12933,6 +12939,8 @@ export namespace Prisma {
     id?: true
     cartId?: true
     productId?: true
+    variantSelections?: true
+    variantSignature?: true
     quantity?: true
     price?: true
     createdAt?: true
@@ -13029,6 +13037,8 @@ export namespace Prisma {
     id: string
     cartId: string
     productId: string
+    variantSelections: JsonValue | null
+    variantSignature: string | null
     quantity: number
     price: number
     createdAt: Date
@@ -13057,6 +13067,8 @@ export namespace Prisma {
     id?: boolean
     cartId?: boolean
     productId?: boolean
+    variantSelections?: boolean
+    variantSignature?: boolean
     quantity?: boolean
     price?: boolean
     createdAt?: boolean
@@ -13068,6 +13080,8 @@ export namespace Prisma {
     id?: boolean
     cartId?: boolean
     productId?: boolean
+    variantSelections?: boolean
+    variantSignature?: boolean
     quantity?: boolean
     price?: boolean
     createdAt?: boolean
@@ -13079,6 +13093,8 @@ export namespace Prisma {
     id?: boolean
     cartId?: boolean
     productId?: boolean
+    variantSelections?: boolean
+    variantSignature?: boolean
     quantity?: boolean
     price?: boolean
     createdAt?: boolean
@@ -13090,12 +13106,14 @@ export namespace Prisma {
     id?: boolean
     cartId?: boolean
     productId?: boolean
+    variantSelections?: boolean
+    variantSignature?: boolean
     quantity?: boolean
     price?: boolean
     createdAt?: boolean
   }
 
-  export type CartItemOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "cartId" | "productId" | "quantity" | "price" | "createdAt", ExtArgs["result"]["cartItem"]>
+  export type CartItemOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "cartId" | "productId" | "variantSelections" | "variantSignature" | "quantity" | "price" | "createdAt", ExtArgs["result"]["cartItem"]>
   export type CartItemInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     cart?: boolean | CartDefaultArgs<ExtArgs>
     product?: boolean | ProductDefaultArgs<ExtArgs>
@@ -13119,6 +13137,8 @@ export namespace Prisma {
       id: string
       cartId: string
       productId: string
+      variantSelections: Prisma.JsonValue | null
+      variantSignature: string | null
       quantity: number
       price: number
       createdAt: Date
@@ -13550,6 +13570,8 @@ export namespace Prisma {
     readonly id: FieldRef<"CartItem", 'String'>
     readonly cartId: FieldRef<"CartItem", 'String'>
     readonly productId: FieldRef<"CartItem", 'String'>
+    readonly variantSelections: FieldRef<"CartItem", 'Json'>
+    readonly variantSignature: FieldRef<"CartItem", 'String'>
     readonly quantity: FieldRef<"CartItem", 'Int'>
     readonly price: FieldRef<"CartItem", 'Float'>
     readonly createdAt: FieldRef<"CartItem", 'DateTime'>
@@ -20691,6 +20713,8 @@ export namespace Prisma {
     id: 'id',
     cartId: 'cartId',
     productId: 'productId',
+    variantSelections: 'variantSelections',
+    variantSignature: 'variantSignature',
     quantity: 'quantity',
     price: 'price',
     createdAt: 'createdAt'
@@ -21618,6 +21642,8 @@ export namespace Prisma {
     id?: StringFilter<"CartItem"> | string
     cartId?: StringFilter<"CartItem"> | string
     productId?: StringFilter<"CartItem"> | string
+    variantSelections?: JsonNullableFilter<"CartItem">
+    variantSignature?: StringNullableFilter<"CartItem"> | string | null
     quantity?: IntFilter<"CartItem"> | number
     price?: FloatFilter<"CartItem"> | number
     createdAt?: DateTimeFilter<"CartItem"> | Date | string
@@ -21629,6 +21655,8 @@ export namespace Prisma {
     id?: SortOrder
     cartId?: SortOrder
     productId?: SortOrder
+    variantSelections?: SortOrderInput | SortOrder
+    variantSignature?: SortOrderInput | SortOrder
     quantity?: SortOrder
     price?: SortOrder
     createdAt?: SortOrder
@@ -21643,6 +21671,8 @@ export namespace Prisma {
     NOT?: CartItemWhereInput | CartItemWhereInput[]
     cartId?: StringFilter<"CartItem"> | string
     productId?: StringFilter<"CartItem"> | string
+    variantSelections?: JsonNullableFilter<"CartItem">
+    variantSignature?: StringNullableFilter<"CartItem"> | string | null
     quantity?: IntFilter<"CartItem"> | number
     price?: FloatFilter<"CartItem"> | number
     createdAt?: DateTimeFilter<"CartItem"> | Date | string
@@ -21654,6 +21684,8 @@ export namespace Prisma {
     id?: SortOrder
     cartId?: SortOrder
     productId?: SortOrder
+    variantSelections?: SortOrderInput | SortOrder
+    variantSignature?: SortOrderInput | SortOrder
     quantity?: SortOrder
     price?: SortOrder
     createdAt?: SortOrder
@@ -21671,6 +21703,8 @@ export namespace Prisma {
     id?: StringWithAggregatesFilter<"CartItem"> | string
     cartId?: StringWithAggregatesFilter<"CartItem"> | string
     productId?: StringWithAggregatesFilter<"CartItem"> | string
+    variantSelections?: JsonNullableWithAggregatesFilter<"CartItem">
+    variantSignature?: StringNullableWithAggregatesFilter<"CartItem"> | string | null
     quantity?: IntWithAggregatesFilter<"CartItem"> | number
     price?: FloatWithAggregatesFilter<"CartItem"> | number
     createdAt?: DateTimeWithAggregatesFilter<"CartItem"> | Date | string
@@ -22724,6 +22758,8 @@ export namespace Prisma {
 
   export type CartItemCreateInput = {
     id?: string
+    variantSelections?: NullableJsonNullValueInput | InputJsonValue
+    variantSignature?: string | null
     quantity?: number
     price: number
     createdAt?: Date | string
@@ -22735,6 +22771,8 @@ export namespace Prisma {
     id?: string
     cartId: string
     productId: string
+    variantSelections?: NullableJsonNullValueInput | InputJsonValue
+    variantSignature?: string | null
     quantity?: number
     price: number
     createdAt?: Date | string
@@ -22742,6 +22780,8 @@ export namespace Prisma {
 
   export type CartItemUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
+    variantSelections?: NullableJsonNullValueInput | InputJsonValue
+    variantSignature?: NullableStringFieldUpdateOperationsInput | string | null
     quantity?: IntFieldUpdateOperationsInput | number
     price?: FloatFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -22753,6 +22793,8 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     cartId?: StringFieldUpdateOperationsInput | string
     productId?: StringFieldUpdateOperationsInput | string
+    variantSelections?: NullableJsonNullValueInput | InputJsonValue
+    variantSignature?: NullableStringFieldUpdateOperationsInput | string | null
     quantity?: IntFieldUpdateOperationsInput | number
     price?: FloatFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -22762,6 +22804,8 @@ export namespace Prisma {
     id?: string
     cartId: string
     productId: string
+    variantSelections?: NullableJsonNullValueInput | InputJsonValue
+    variantSignature?: string | null
     quantity?: number
     price: number
     createdAt?: Date | string
@@ -22769,6 +22813,8 @@ export namespace Prisma {
 
   export type CartItemUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
+    variantSelections?: NullableJsonNullValueInput | InputJsonValue
+    variantSignature?: NullableStringFieldUpdateOperationsInput | string | null
     quantity?: IntFieldUpdateOperationsInput | number
     price?: FloatFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -22778,6 +22824,8 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     cartId?: StringFieldUpdateOperationsInput | string
     productId?: StringFieldUpdateOperationsInput | string
+    variantSelections?: NullableJsonNullValueInput | InputJsonValue
+    variantSignature?: NullableStringFieldUpdateOperationsInput | string | null
     quantity?: IntFieldUpdateOperationsInput | number
     price?: FloatFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -23881,6 +23929,8 @@ export namespace Prisma {
     id?: SortOrder
     cartId?: SortOrder
     productId?: SortOrder
+    variantSelections?: SortOrder
+    variantSignature?: SortOrder
     quantity?: SortOrder
     price?: SortOrder
     createdAt?: SortOrder
@@ -23895,6 +23945,7 @@ export namespace Prisma {
     id?: SortOrder
     cartId?: SortOrder
     productId?: SortOrder
+    variantSignature?: SortOrder
     quantity?: SortOrder
     price?: SortOrder
     createdAt?: SortOrder
@@ -23904,6 +23955,7 @@ export namespace Prisma {
     id?: SortOrder
     cartId?: SortOrder
     productId?: SortOrder
+    variantSignature?: SortOrder
     quantity?: SortOrder
     price?: SortOrder
     createdAt?: SortOrder
@@ -26349,6 +26401,8 @@ export namespace Prisma {
 
   export type CartItemCreateWithoutProductInput = {
     id?: string
+    variantSelections?: NullableJsonNullValueInput | InputJsonValue
+    variantSignature?: string | null
     quantity?: number
     price: number
     createdAt?: Date | string
@@ -26358,6 +26412,8 @@ export namespace Prisma {
   export type CartItemUncheckedCreateWithoutProductInput = {
     id?: string
     cartId: string
+    variantSelections?: NullableJsonNullValueInput | InputJsonValue
+    variantSignature?: string | null
     quantity?: number
     price: number
     createdAt?: Date | string
@@ -26535,6 +26591,8 @@ export namespace Prisma {
     id?: StringFilter<"CartItem"> | string
     cartId?: StringFilter<"CartItem"> | string
     productId?: StringFilter<"CartItem"> | string
+    variantSelections?: JsonNullableFilter<"CartItem">
+    variantSignature?: StringNullableFilter<"CartItem"> | string | null
     quantity?: IntFilter<"CartItem"> | number
     price?: FloatFilter<"CartItem"> | number
     createdAt?: DateTimeFilter<"CartItem"> | Date | string
@@ -27043,6 +27101,8 @@ export namespace Prisma {
 
   export type CartItemCreateWithoutCartInput = {
     id?: string
+    variantSelections?: NullableJsonNullValueInput | InputJsonValue
+    variantSignature?: string | null
     quantity?: number
     price: number
     createdAt?: Date | string
@@ -27052,6 +27112,8 @@ export namespace Prisma {
   export type CartItemUncheckedCreateWithoutCartInput = {
     id?: string
     productId: string
+    variantSelections?: NullableJsonNullValueInput | InputJsonValue
+    variantSignature?: string | null
     quantity?: number
     price: number
     createdAt?: Date | string
@@ -28172,6 +28234,8 @@ export namespace Prisma {
   export type CartItemCreateManyProductInput = {
     id?: string
     cartId: string
+    variantSelections?: NullableJsonNullValueInput | InputJsonValue
+    variantSignature?: string | null
     quantity?: number
     price: number
     createdAt?: Date | string
@@ -28256,6 +28320,8 @@ export namespace Prisma {
 
   export type CartItemUpdateWithoutProductInput = {
     id?: StringFieldUpdateOperationsInput | string
+    variantSelections?: NullableJsonNullValueInput | InputJsonValue
+    variantSignature?: NullableStringFieldUpdateOperationsInput | string | null
     quantity?: IntFieldUpdateOperationsInput | number
     price?: FloatFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -28265,6 +28331,8 @@ export namespace Prisma {
   export type CartItemUncheckedUpdateWithoutProductInput = {
     id?: StringFieldUpdateOperationsInput | string
     cartId?: StringFieldUpdateOperationsInput | string
+    variantSelections?: NullableJsonNullValueInput | InputJsonValue
+    variantSignature?: NullableStringFieldUpdateOperationsInput | string | null
     quantity?: IntFieldUpdateOperationsInput | number
     price?: FloatFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -28273,6 +28341,8 @@ export namespace Prisma {
   export type CartItemUncheckedUpdateManyWithoutProductInput = {
     id?: StringFieldUpdateOperationsInput | string
     cartId?: StringFieldUpdateOperationsInput | string
+    variantSelections?: NullableJsonNullValueInput | InputJsonValue
+    variantSignature?: NullableStringFieldUpdateOperationsInput | string | null
     quantity?: IntFieldUpdateOperationsInput | number
     price?: FloatFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -28305,6 +28375,8 @@ export namespace Prisma {
   export type CartItemCreateManyCartInput = {
     id?: string
     productId: string
+    variantSelections?: NullableJsonNullValueInput | InputJsonValue
+    variantSignature?: string | null
     quantity?: number
     price: number
     createdAt?: Date | string
@@ -28312,6 +28384,8 @@ export namespace Prisma {
 
   export type CartItemUpdateWithoutCartInput = {
     id?: StringFieldUpdateOperationsInput | string
+    variantSelections?: NullableJsonNullValueInput | InputJsonValue
+    variantSignature?: NullableStringFieldUpdateOperationsInput | string | null
     quantity?: IntFieldUpdateOperationsInput | number
     price?: FloatFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -28321,6 +28395,8 @@ export namespace Prisma {
   export type CartItemUncheckedUpdateWithoutCartInput = {
     id?: StringFieldUpdateOperationsInput | string
     productId?: StringFieldUpdateOperationsInput | string
+    variantSelections?: NullableJsonNullValueInput | InputJsonValue
+    variantSignature?: NullableStringFieldUpdateOperationsInput | string | null
     quantity?: IntFieldUpdateOperationsInput | number
     price?: FloatFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -28329,6 +28405,8 @@ export namespace Prisma {
   export type CartItemUncheckedUpdateManyWithoutCartInput = {
     id?: StringFieldUpdateOperationsInput | string
     productId?: StringFieldUpdateOperationsInput | string
+    variantSelections?: NullableJsonNullValueInput | InputJsonValue
+    variantSignature?: NullableStringFieldUpdateOperationsInput | string | null
     quantity?: IntFieldUpdateOperationsInput | number
     price?: FloatFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
