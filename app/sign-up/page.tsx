@@ -1,6 +1,7 @@
 import AcmeLogo from '@/app/ui/acme-logo';
 import { Suspense } from 'react';
 import SignupForm from '../ui/signup-form';
+import Link from 'next/link';
 export default function SignupPage() {
   return (
     <main className="flex items-center justify-center md:h-screen">
@@ -12,6 +13,7 @@ export default function SignupPage() {
         </div>
         <Suspense>
           <SignupForm />
+          <p className="text-center"><Link className='text-sm font-semibold text-gray-900' href="/login">Login</Link> if already have an account</p>
         </Suspense>
       </div>
     </main>

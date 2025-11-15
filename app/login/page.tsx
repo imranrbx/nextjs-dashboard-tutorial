@@ -1,6 +1,7 @@
 import AcmeLogo from '@/app/ui/acme-logo';
 import { Suspense } from 'react';
 import LoginForm from '../ui/login-form';
+import Link from 'next/link';
 export default function LoginPage() {
   return (
     <main className="flex items-center justify-center md:h-screen">
@@ -12,6 +13,7 @@ export default function LoginPage() {
         </div>
         <Suspense>
           <LoginForm />
+          <p className="text-center"><Link className='text-sm font-semibold text-gray-900' href="/sign-up">Sign Up</Link> if you Don't Have an account</p>
         </Suspense>
       </div>
     </main>

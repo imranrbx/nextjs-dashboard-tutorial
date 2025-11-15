@@ -1,8 +1,11 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { lusitana } from '@/app/ui/fonts';
-
-export default function Page() {
+import getServerSession from "next-auth";
+import { authConfig } from "@/auth.config"
+export default async function Page() {
+  const session = getServerSession(authConfig)
+  const isLoggedIn = !!(await session.auth())?.user;
   return (
     <main className="min-h-screen bg-gray-50">
       <div className="mx-auto flex max-w-6xl flex-col gap-10 px-6 pb-16 pt-12 lg:flex-row lg:items-center">
@@ -27,12 +30,18 @@ export default function Page() {
             >
               Explore the shop
             </Link>
-            <Link
+
+            {isLoggedIn ? <Link
               href="/account/orders"
               className="rounded-full border border-gray-300 px-6 py-3 text-sm font-semibold text-gray-900"
             >
               View user dashboard
-            </Link>
+            </Link> : <Link
+              href="/login"
+              className="rounded-full border border-gray-300 px-6 py-3 text-sm font-semibold text-gray-900"
+            >
+              Login
+            </Link>}
           </div>
           <div className="grid gap-4 sm:grid-cols-3">
             {[

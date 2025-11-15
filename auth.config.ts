@@ -8,29 +8,44 @@ export const authConfig = {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
       const isOnDashboard = nextUrl.pathname.startsWith('/dashboard');
-      const isAuthPage =
-        nextUrl.pathname === '/login' || nextUrl.pathname === '/sign-up';
+      const isAuthPage = nextUrl.pathname === '/login' || nextUrl.pathname === '/sign-up';
 
       // Restrict /dashboard to ADMIN only; redirect non-admins to login
-      if (isOnDashboard) {
+      const role = auth?.user.role ? auth?.user.role : null;
+
+      console.log("On Dashboard roles", isOnDashboard, role)
+      if (isOnDashboard && role === "ADMIN") {
         // .role may come from auth.user or session, check both (adjust for your session shape)
-        const role = auth?.user?.role ?? auth?.role;
-        if (isLoggedIn && role === 'ADMIN') {
+        if (isLoggedIn) {
           return true;
         }
         // Not admin? Redirect to login (or display error)
-        if (isLoggedIn) {
+        if (isAuthPage && isLoggedIn && role !== "ADMIN") {
           // If logged in as non-admin, redirect to /login with error query or just false for access denied
           return Response.redirect(new URL('/login?error=forbidden', nextUrl));
         }
-        return false;
+        return true;
       }
-
       if (isAuthPage && isLoggedIn) {
-        return Response.redirect(new URL('/dashboard', nextUrl));
+
+        return Response.redirect(new URL('/account/orders', nextUrl));
       }
 
       return true;
+    },
+    jwt({ token, user }) {
+      if (user) {
+        token.role = user.role;
+        token.id = user.id;
+      }
+      return token;
+    },
+    session({ session, token }) {
+      if (token && session.user) {
+        session.user.role = typeof token.role === 'string' ? token.role : undefined
+        session.user.id = typeof token.role === 'string' ? token.id : undefined
+      }
+      return session
     },
   },
   providers: [], // Add providers with an empty array for now

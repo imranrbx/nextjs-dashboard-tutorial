@@ -7,9 +7,8 @@ import bcrypt from 'bcrypt';
 import postgres from 'postgres';
 import { PrismaClient } from '@/app/generated/prisma';
 const prisma = new PrismaClient();
-const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
 
-async function getUser(email: string): Promise<User | undefined> {
+async function getUser(email: string): Promise<User | undefined | null> {
     try {
         const user = await prisma.user.findUnique({
             where: { email },
@@ -21,7 +20,8 @@ async function getUser(email: string): Promise<User | undefined> {
         return user;
     } catch (error) {
         console.error('Failed to fetch user:', error);
-        throw new Error('Failed to fetch user.');
+        // throw new Error('Failed to fetch user.');
+        return;
     }
 }
 
