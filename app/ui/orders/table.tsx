@@ -48,6 +48,11 @@ export default async function OrdersTable({
                 <div className="flex w-full items-center justify-between pt-4">
                   <div>
                     <p className="text-xl font-medium">{formatCurrency(order.totalAmount)}</p>
+                    {order.discountAmount && order.discountAmount > 0 ? (
+                      <p className="text-xs text-gray-600">
+                        Discount {formatCurrency(order.discountAmount)}{order.couponCode ? ` • Coupon ${order.couponCode}` : ''}
+                      </p>
+                    ) : null}
                     <p className="text-xs text-gray-400">
                       {formatDateToLocal(order.createdAt.toString())}
                     </p>
@@ -71,6 +76,12 @@ export default async function OrdersTable({
                 </th>
                 <th scope="col" className="px-3 py-5 font-medium">
                   Amount
+                </th>
+                <th scope="col" className="px-3 py-5 font-medium">
+                  Coupon
+                </th>
+                <th scope="col" className="px-3 py-5 font-medium">
+                  Discount
                 </th>
                 <th scope="col" className="px-3 py-5 font-medium">
                   Status
@@ -100,6 +111,12 @@ export default async function OrdersTable({
                   </td>
                   <td className="whitespace-nowrap px-3 py-3">
                     {formatCurrency(order.totalAmount)}
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-3">
+                    {order.couponCode || '-'}
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-3">
+                    {order.discountAmount && order.discountAmount > 0 ? formatCurrency(order.discountAmount) : '-'}
                   </td>
                   <td className="whitespace-nowrap px-3 py-3">
                     <OrderStatus status={order.status} />

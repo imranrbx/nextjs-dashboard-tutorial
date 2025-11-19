@@ -100,8 +100,23 @@ export async function getCartForUser(userId: string) {
                 },
                 orderBy: { createdAt: 'asc' },
             },
+            coupon: true,
         },
     });
+}
+
+export function calculateCouponDiscount(subtotal: number, coupon: {
+    discountType: 'PERCENTAGE' | 'FIXED';
+    discountValue: number;
+    minOrderValue: number | null | undefined;
+} | null) {
+    if (!coupon) return 0;
+    if (coupon.minOrderValue && subtotal < coupon.minOrderValue) return 0;
+    if (coupon.discountType === 'PERCENTAGE') {
+        const pct = Math.max(0, Math.min(100, coupon.discountValue));
+        return Math.floor((subtotal * pct) / 100);
+    }
+    return Math.min(subtotal, Math.max(0, coupon.discountValue));
 }
 
 export async function getCartItemCount(userId: string) {

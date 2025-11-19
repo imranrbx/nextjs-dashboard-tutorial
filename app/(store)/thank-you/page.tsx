@@ -6,11 +6,12 @@ import {
 } from '@/app/lib/store-service';
 
 type ThankYouPageProps = {
-  searchParams: { orderId?: string };
+  searchParams?: Promise<{ orderId?: string }>;
 };
 
-export default async function ThankYouPage({ searchParams }: ThankYouPageProps) {
-  const { orderId } = searchParams;
+export default async function ThankYouPage(props: ThankYouPageProps) {
+  const sp = (await props.searchParams) ?? {};
+  const { orderId } = sp;
   const user = await getCurrentUser();
 
   if (!user) {

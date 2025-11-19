@@ -9,7 +9,7 @@ import { AddToCartButton } from '@/app/ui/store/add-to-cart-button';
 import { VariableProductOptions } from '@/app/ui/store/variable-product-options';
 
 type ProductPageProps = {
-  params: { slug: string };
+ slug: string ;
 };
 
 type ProductWithRelations = Awaited<ReturnType<typeof getProductBySlug>>;
@@ -21,8 +21,8 @@ function resolvePrice(product: ProductWithRelations) {
   return Math.min(...product.variants.map((variant) => variant.price));
 }
 
-export default async function ProductPage({ params }: ProductPageProps) {
-  const { slug } = params;
+export default async function ProductPage({params}: {params: Promise<ProductPageProps>}) {
+  const { slug } = await params;
   const product = await getProductBySlug(slug);
 
   if (!product) {

@@ -172,6 +172,8 @@ model Cart {
   user      User       @relation(fields: [userId], references: [id])
   userId    String     @unique
   items     CartItem[]
+  coupon    Coupon?    @relation(fields: [couponId], references: [id])
+  couponId  String?
   updatedAt DateTime   @updatedAt
 
   @@map("carts")
@@ -197,17 +199,19 @@ model CartItem {
 /////////////////////////////////////////////////////
 
 model Order {
-  id          String      @id @default(cuid())
-  user        User        @relation(fields: [userId], references: [id])
-  userId      String
-  address     Address?    @relation(fields: [addressId], references: [id])
-  addressId   String?
-  items       OrderItem[]
-  totalAmount Float
-  status      OrderStatus @default(PENDING)
-  payment     Payment?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id             String      @id @default(cuid())
+  user           User        @relation(fields: [userId], references: [id])
+  userId         String
+  address        Address?    @relation(fields: [addressId], references: [id])
+  addressId      String?
+  items          OrderItem[]
+  totalAmount    Float
+  couponCode     String?
+  discountAmount Float       @default(0)
+  status         OrderStatus @default(PENDING)
+  payment        Payment?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
 
   @@map("orders")
 }
@@ -271,6 +275,7 @@ model Coupon {
   expiresAt     DateTime?
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
+  carts         Cart[]
 
   @@map("coupons")
 }

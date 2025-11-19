@@ -1,10 +1,6 @@
 import Link from 'next/link';
-import {
-  formatCurrency,
-  getCartForUser,
-  getCurrentUser,
-  getUserAddresses,
-} from '@/app/lib/store-service';
+import { formatCurrency, calculateCouponDiscount } from '@/app/lib/store-utils';
+import { getCartForUser, getCurrentUser, getUserAddresses } from '@/app/lib/store-service';
 import { CheckoutForm } from '@/app/ui/store/checkout-form';
 
 export default async function CheckoutPage() {
@@ -53,6 +49,8 @@ export default async function CheckoutPage() {
     (total, item) => total + item.quantity * item.price,
     0,
   );
+  const discount = calculateCouponDiscount(subtotal, cart.coupon ?? null);
+  const total = Math.max(0, subtotal - discount);
 
   return (
     <div className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr]">
@@ -81,6 +79,16 @@ export default async function CheckoutPage() {
         <div className="flex items-center justify-between border-t border-gray-100 pt-4 text-base font-semibold text-gray-900">
           <p>Subtotal</p>
           <p>{formatCurrency(subtotal)}</p>
+        </div>
+        {discount > 0 ? (
+          <div className="flex items-center justify-between text-sm">
+            <p className="text-gray-700">Discount</p>
+            <p className="font-semibold text-green-700">- {formatCurrency(discount)}</p>
+          </div>
+        ) : null}
+        <div className="flex items-center justify-between text-base font-semibold text-gray-900">
+          <p>Total</p>
+          <p>{formatCurrency(total)}</p>
         </div>
         <p className="text-xs text-gray-500">
           Taxes and shipping are calculated after confirming your shipping address.

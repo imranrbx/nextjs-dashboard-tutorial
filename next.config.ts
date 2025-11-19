@@ -1,8 +1,10 @@
-import type { NextConfig } from 'next';
-import path from 'path'
-const nextConfig: NextConfig = {
-  /* config options here */
-
+const nextConfig = {
+  turbopack: {
+    rules: {
+      'node_modules/@mapbox/node-pre-gyp/**.html': ['raw-loader'],
+      '**/*.html': ['raw-loader'],
+    },
+  },
 };
 
 export default nextConfig;

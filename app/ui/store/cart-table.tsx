@@ -1,14 +1,19 @@
+"use client";
+import { useEffect, useActionState } from 'react';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Prisma } from '@/app/generated/prisma';
 import {
   formatCurrency,
   getProductPrimaryImage,
-} from '@/app/lib/store-service';
+  calculateCouponDiscount,
+} from '@/app/lib/store-utils';
 import {
   removeCartItem,
   updateCartQuantity,
 } from '@/app/lib/store-actions';
+import { applyCouponToCart, removeCouponFromCart } from '@/app/lib/store-actions';
 
 type CartItem = {
   id: string;
@@ -26,6 +31,12 @@ type CartItem = {
 
 type CartTableProps = {
   items: CartItem[];
+  coupon?: {
+    code: string;
+    discountType: 'PERCENTAGE' | 'FIXED';
+    discountValue: number;
+    minOrderValue: number | null;
+  } | null;
 };
 
 function buildSelectionLabel(value: Prisma.JsonValue | null | undefined) {
@@ -45,7 +56,26 @@ function buildSelectionLabel(value: Prisma.JsonValue | null | undefined) {
   return labels.length > 0 ? labels.join(', ') : null;
 }
 
-export function CartTable({ items }: CartTableProps) {
+export function CartTable({ items, coupon }: CartTableProps) {
+  const router = useRouter();
+  type CouponActionState = { success: boolean; message: string };
+  async function applyWrapper(prev: CouponActionState, formData: FormData): Promise<CouponActionState> {
+    const res = await applyCouponToCart(formData);
+    const state = (res ?? { success: false, message: '' }) as CouponActionState;
+    return state;
+  }
+  async function removeWrapper(prev: CouponActionState, _formData: FormData): Promise<CouponActionState> {
+    const res = await removeCouponFromCart();
+    const state = (res ?? { success: false, message: '' }) as CouponActionState;
+    return state;
+  }
+  const [applyState, applyAction] = useActionState<CouponActionState, FormData>(applyWrapper, { success: false, message: '' });
+  const [removeState, removeAction] = useActionState<CouponActionState, FormData>(removeWrapper, { success: false, message: '' });
+  useEffect(() => {
+    if (applyState?.success || removeState?.success) {
+      router.refresh();
+    }
+  }, [applyState?.success, removeState?.success, router]);
   if (items.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-gray-300 p-10 text-center">
@@ -61,6 +91,8 @@ export function CartTable({ items }: CartTableProps) {
     (acc, item) => acc + item.price * item.quantity,
     0,
   );
+  const discount = calculateCouponDiscount(subtotal, coupon ?? null);
+  const total = Math.max(0, subtotal - discount);
 
   return (
     <div className="space-y-6">
@@ -153,12 +185,53 @@ export function CartTable({ items }: CartTableProps) {
         })}
       </ul>
 
-      <div className="rounded-2xl border border-gray-200 bg-gray-50 p-6">
+      <div className="space-y-4 rounded-2xl border border-gray-200 bg-gray-50 p-6">
         <div className="flex items-center justify-between text-lg font-semibold text-gray-900">
-          <p>Order total</p>
+          <p>Subtotal</p>
           <p>{formatCurrency(subtotal)}</p>
         </div>
-        <p className="mt-1 text-sm text-gray-500">
+        {(applyState?.message || removeState?.message) ? (
+          <div className={`rounded-md p-3 text-sm ${ (applyState?.success || removeState?.success) ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700' }`}>
+            <p>{applyState?.message || removeState?.message}</p>
+          </div>
+        ) : null}
+        {coupon ? (
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center gap-2">
+              <span className="rounded-full bg-green-100 px-2 py-1 text-green-700">{coupon.code}</span>
+              <span className="text-gray-600">applied</span>
+            </div>
+            <form action={removeAction}>
+              <button type="submit" className="text-sm font-medium text-red-600 hover:text-red-500">Remove</button>
+            </form>
+          </div>
+        ) : (
+          <form action={applyAction} className="flex items-center gap-2">
+            <input
+              type="text"
+              name="code"
+              placeholder="Coupon code"
+              className="w-48 rounded-md border border-gray-300 px-3 py-2 text-sm"
+            />
+            <button
+              type="submit"
+              className="rounded-md bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800"
+            >
+              Apply
+            </button>
+          </form>
+        )}
+        {discount > 0 ? (
+          <div className="flex items-center justify-between text-base">
+            <p className="text-gray-700">Discount</p>
+            <p className="font-semibold text-green-700">- {formatCurrency(discount)}</p>
+          </div>
+        ) : null}
+        <div className="flex items-center justify-between border-t border-gray-200 pt-4 text-lg font-semibold text-gray-900">
+          <p>Total</p>
+          <p>{formatCurrency(total)}</p>
+        </div>
+        <p className="text-sm text-gray-500">
           Taxes and shipping will be calculated at checkout.
         </p>
       </div>

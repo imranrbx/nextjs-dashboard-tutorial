@@ -28,7 +28,7 @@ export type Revenue = {
 export type LatestInvoice = {
   id: string;
   name: string;
-  image_url: string;
+  image_url: string | null;
   email: string;
   amount: string;
 };

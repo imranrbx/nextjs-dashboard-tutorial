@@ -139,9 +139,12 @@ export async function fetchInvoiceById(id: string) {
 
     if (!invoice) return null;
 
+    const narrowedStatus: 'PENDING' | 'PAID' = invoice.status === 'PAID' ? 'PAID' : 'PENDING';
     return {
-      ...invoice,
-      amount: invoice.amount / 100, // convert cents to dollars
+      id: invoice.id,
+      user_id: invoice.user_id,
+      amount: invoice.amount / 100,
+      status: narrowedStatus,
     };
   } catch (error) {
     console.error('Database Error:', error);

@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import prisma from './prisma';
-import { getCartForUser, getCurrentUser } from './store-service';
+import { getCartForUser, getCurrentUser, calculateCouponDiscount } from './store-service';
 
 const cartFormSchema = z.object({
     productId: z.string(),
@@ -28,6 +28,10 @@ const quantitySchema = z.object({
 
 const removeSchema = z.object({
     cartItemId: z.string(),
+});
+
+const couponApplySchema = z.object({
+    code: z.string().trim().min(1).max(64),
 });
 
 const checkoutSchema = z.object({
@@ -235,6 +239,73 @@ export async function removeCartItem(formData: FormData) {
     revalidatePath('/checkout');
 }
 
+export async function applyCouponToCart(formData: FormData) {
+    const user = await getCurrentUser();
+    if (!user) {
+        return { success: false, message: 'Log in to apply a coupon.' };
+    }
+
+    const parsed = couponApplySchema.safeParse({
+        code: formData.get('code'),
+    });
+
+    if (!parsed.success) {
+        return { success: false, message: 'Enter a valid coupon code.' };
+    }
+
+    const code = parsed.data.code.toUpperCase();
+
+    const cart = await ensureCart(user.id);
+
+    const items = await prisma.cartItem.findMany({
+        where: { cartId: cart.id },
+    });
+
+    const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+    const coupon = await prisma.coupon.findUnique({ where: { code } });
+
+    if (!coupon) {
+        return { success: false, message: 'Coupon code not found.' };
+    }
+    if (!coupon.isActive) {
+        return { success: false, message: 'This coupon is inactive.' };
+    }
+    if (coupon.expiresAt && coupon.expiresAt < new Date()) {
+        return { success: false, message: 'This coupon has expired.' };
+    }
+    if (coupon.minOrderValue && subtotal < coupon.minOrderValue) {
+        return { success: false, message: 'Minimum order value not met for this coupon.' };
+    }
+
+    await prisma.cart.update({
+        where: { id: cart.id },
+        data: { couponId: coupon.id },
+    });
+
+    revalidatePath('/cart');
+    revalidatePath('/checkout');
+    return { success: true, message: 'Coupon applied successfully.' };
+}
+
+export async function removeCouponFromCart() {
+    const user = await getCurrentUser();
+    if (!user) {
+        return { success: false, message: 'Log in to remove a coupon.' };
+    }
+
+    const cart = await prisma.cart.findUnique({ where: { userId: user.id } });
+    if (!cart) {
+        return { success: false, message: 'No active cart found.' };
+    }
+
+    await prisma.cart.update({ where: { id: cart.id }, data: { couponId: null } });
+
+    revalidatePath('/cart');
+    revalidatePath('/checkout');
+    return { success: true, message: 'Coupon removed.' };
+}
+
 export async function placeOrder(prevState: { error?: string | null }, formData: FormData) {
     const user = await getCurrentUser();
     if (!user) {
@@ -316,9 +387,17 @@ export async function placeOrder(prevState: { error?: string | null }, formData:
         finalAddressId = newAddress.id;
     }
 
-    const totalAmount = cart.items.reduce((total, item) => {
-        return total + item.quantity * item.price;
-    }, 0);
+    const subtotal = cart.items.reduce((total, item) => total + item.quantity * item.price, 0);
+    let discount = 0;
+    if (cart.coupon) {
+        const active = cart.coupon.isActive && (!cart.coupon.expiresAt || cart.coupon.expiresAt >= new Date());
+        discount = active ? calculateCouponDiscount(subtotal, {
+            discountType: cart.coupon.discountType as 'PERCENTAGE' | 'FIXED',
+            discountValue: cart.coupon.discountValue,
+            minOrderValue: cart.coupon.minOrderValue ?? null,
+        }) : 0;
+    }
+    const totalAmount = Math.max(0, subtotal - discount);
 
     const order = await prisma.$transaction(async (tx) => {
         const createdOrder = await tx.order.create({
@@ -326,6 +405,8 @@ export async function placeOrder(prevState: { error?: string | null }, formData:
                 userId: user.id,
                 addressId: finalAddressId,
                 totalAmount,
+                couponCode: cart.coupon ? cart.coupon.code : null,
+                discountAmount: discount,
                 items: {
                     create: cart.items.map((item) => ({
                         productId: item.productId,
@@ -339,6 +420,7 @@ export async function placeOrder(prevState: { error?: string | null }, formData:
         await tx.cartItem.deleteMany({
             where: { cartId: cart.id },
         });
+        await tx.cart.update({ where: { id: cart.id }, data: { couponId: null } });
 
         return createdOrder;
     });

@@ -15,6 +15,8 @@ type Order = {
   id: string;
   status: string;
   totalAmount: number;
+  discountAmount?: number;
+  couponCode?: string | null;
   createdAt: Date;
   items: OrderItem[];
   address?: {
@@ -78,6 +80,11 @@ export function OrdersTable({ title, orders, emptyMessage }: OrdersTableProps) {
                   <span className="text-base font-semibold text-gray-900">
                     {formatCurrency(order.totalAmount)}
                   </span>
+                  {order.discountAmount && order.discountAmount > 0 ? (
+                    <span className="text-xs text-gray-600">
+                      Discount {formatCurrency(order.discountAmount)}{order.couponCode ? ` • Coupon ${order.couponCode}` : ''}
+                    </span>
+                  ) : null}
                   <span
                     className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ring-1 ring-inset ${statusClasses[order.status] || 'bg-gray-100 text-gray-800 ring-gray-200'}`}
                   >

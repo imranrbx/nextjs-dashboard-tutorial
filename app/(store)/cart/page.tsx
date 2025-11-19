@@ -33,7 +33,7 @@ export default async function CartPage() {
         </p>
       </header>
 
-      <CartTable items={cart?.items ?? []} />
+      <CartTable items={cart?.items ?? []} coupon={cart?.coupon ?? null} />
 
       {cart?.items.length ? (
         <div className="text-right">
